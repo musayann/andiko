@@ -103,13 +103,13 @@ echo "This is a very long command line that wraps instead of scrolling horizonta
 | Feature        | Syntax              | Supported |
 | -------------- | :------------------ | :-------: |
 | Alert boxes    | `:::info`           |    ✅     |
-| Math           | `$...$`, `$$...$$`  |    ✅     |
+| Maths          | `$...$`, `$$...$$`  |    ✅     |
 | Diagrams       | ` ```mermaid `      |    ✅     |
 | Line numbers   | ` ```js= `          |    ✅     |
 
-## Math
+## Maths
 
-Inline math like $E = mc^2$ and $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$ sits in the text. Display math gets its own block:
+Inline maths like $E = mc^2$ and $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$ sits in the text. Display maths gets its own block:
 
 $$
 \int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}

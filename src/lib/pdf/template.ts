@@ -51,7 +51,7 @@ const escapeHtml = (value: string) =>
 export async function buildPdfHtml(bodyHtml: string, title: string): Promise<string> {
   const styles = await loadStyles()
   return `<!doctype html>
-<html lang="en">
+<html lang="en-RW">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; font-src data:">

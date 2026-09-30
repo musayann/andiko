@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 
 const title = "Andiko · Markdown editor with live preview and PDF export"
 const description =
-  "A local-first Markdown editor with live preview, KaTeX math, Mermaid diagrams and PDF export. No account needed: your documents stay in your browser."
+  "A local-first Markdown editor with live preview, KaTeX maths, Mermaid diagrams and PDF export. No account needed: your documents stay in your browser."
 
 export const metadata: Metadata = {
   title: {
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en-RW" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="h-full overflow-hidden">
         <TooltipProvider delayDuration={400}>{children}</TooltipProvider>
         <Toaster position="bottom-right" />
