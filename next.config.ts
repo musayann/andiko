@@ -2,9 +2,12 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   // The PDF route reads these at runtime (see src/lib/pdf/template.ts).
-  // puppeteer-core and @sparticuz/chromium are already external by default.
+  // puppeteer-core and @sparticuz/chromium are already external by default,
+  // but chromium locates its compressed binary from `import.meta.url`, which
+  // the tracer can't follow, so its bin/ folder has to be listed explicitly.
   outputFileTracingIncludes: {
     "/api/export/pdf": [
+      "./node_modules/@sparticuz/chromium/bin/*.br",
       "./src/styles/document.css",
       "./node_modules/katex/dist/katex.min.css",
       "./node_modules/katex/dist/fonts/*.woff2",
