@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .side { fill: #171717; }
+    .mark { fill: #fafafa; }
+    @media (prefers-color-scheme: dark) {
+      .side { fill: #e5e5e5; }
+      .mark { fill: #171717; }
+    }
+  </style>
+  <rect width="32" height="32" rx="8" fill="#fdc700"/>
+  <path class="side" d="M16 0H8a8 8 0 0 0-8 8v16a8 8 0 0 0 8 8h8Z"/>
+  <path fill="#171717" d="M8 24l5-16h6l5 16h-4l-1.41-4.5h-5.18L12 24Zm6.34-7.5h3.32L16 11.2Z"/>
+  <path class="mark" d="M8 24l5-16h3v3.2l-1.66 5.3H16v3h-2.59L12 24Z"/>
+</svg>
