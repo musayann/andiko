@@ -7,8 +7,7 @@ import {
   DownloadIcon,
   FileDownIcon,
   FileTextIcon,
-  Link2Icon,
-  Link2OffIcon,
+  MoveVerticalIcon,
   PencilIcon,
   PrinterIcon,
 } from "lucide-react"
@@ -121,9 +120,9 @@ export function Toolbar({
               aria-pressed={scrollSync}
               aria-label="Sync scrolling"
               onClick={() => onScrollSyncChange(!scrollSync)}
-              className={scrollSync ? "text-foreground" : "text-muted-foreground"}
+              className="text-muted-foreground aria-pressed:bg-muted aria-pressed:text-foreground"
             >
-              {scrollSync ? <Link2Icon /> : <Link2OffIcon />}
+              <MoveVerticalIcon />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{scrollSync ? "Scroll sync on" : "Scroll sync off"}</TooltipContent>

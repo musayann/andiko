@@ -97,7 +97,7 @@
   --cm-bg: #282c34;
   --cm-fg: #abb2bf;
   --cm-gutter: #636d83;
-  --cm-active-line: #2c313c;
+  --cm-active-line: #ffffff12; /* translucent so a selection on the current line shows through */
   --cm-cursor: #528bff;
   --cm-panel: #21252b;
   --cm-panel-border: #181a1f;
