@@ -14,6 +14,7 @@ A local-first Markdown editor with live preview and PDF export. Built with Next.
   - YAML front matter (`title`, `tags`, `breaks`)
 - **PDF export**: a real download rendered by headless Chrome on the server, with selectable text, embedded fonts and page numbers. Browser printing is available as a fallback.
 - **Local-first**: documents live in the browser (IndexedDB). You can import and download `.md` files. There is no account and no backend database.
+- **Folders (optional)**: group documents in nested folders. Move them with the ⋯ menu or by dragging in the sidebar. Documents without a folder stay at the top level, as before.
 
 ## Getting started
 
@@ -66,6 +67,7 @@ src/
     api/export/pdf/route.ts   PDF rendering endpoint
   components/
     app-sidebar.tsx           document list, import, duplicate, download, delete
+    sidebar/                  folder tree rows, Move to menu, folder dialogs, drag and drop
     workspace/                toolbar, CodeMirror editor, preview, TOC, export dialog
   hooks/                      autosave (use-doc), scroll sync
   lib/
@@ -73,6 +75,7 @@ src/
     preview-dom.ts            DOM diffing (morphdom), Mermaid, copy buttons, static export HTML
     scroll-sync.ts            editor line ↔ preview offset mapping
     db.ts                     Dexie (IndexedDB) storage
+    folders.ts                folder tree helpers (nesting, cycle checks, paths)
     pdf/                      Chrome launcher, HTML template, URL guard
   styles/document.css         document look (preview, print, PDF)
 public/welcome.md             feature showcase

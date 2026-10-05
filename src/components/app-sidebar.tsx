@@ -1,23 +1,24 @@
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
-import {
-  CopyIcon,
-  FileDownIcon,
-  FilePlusIcon,
-  FileTextIcon,
-  HardDriveIcon,
-  MoreHorizontalIcon,
-  SearchIcon,
-  Trash2Icon,
-  UploadIcon,
-} from "lucide-react"
+import { FilePlusIcon, FolderPlusIcon, HardDriveIcon, SearchIcon, UploadIcon } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { LogoMark } from "@/components/logo"
+import { DocItem } from "@/components/sidebar/doc-item"
+import { DeleteFolderDialog, FolderNameDialog, type FolderDeletion } from "@/components/sidebar/folder-dialogs"
+import { FolderItem } from "@/components/sidebar/folder-item"
+import {
+  SidebarTreeContext,
+  useDropTarget,
+  useSidebarTree,
+  type DropTarget,
+  type SidebarTree,
+  type TreeItem,
+} from "@/components/sidebar/tree-context"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import {
   AlertDialog,
@@ -31,13 +32,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -47,41 +41,41 @@ import {
   SidebarHeader,
   SidebarInput,
   SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { createDoc, db, deleteDoc, duplicateDoc, type Doc } from "@/lib/db"
+import {
+  createDoc,
+  createFolder,
+  db,
+  deleteDoc,
+  deleteFolder,
+  duplicateDoc,
+  moveDoc,
+  moveFolder,
+  renameFolder,
+  type Folder,
+} from "@/lib/db"
 import { downloadMarkdown } from "@/lib/export"
-
-const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
-
-function formatUpdated(timestamp: number) {
-  const seconds = Math.round((timestamp - Date.now()) / 1000)
-  const units: [Intl.RelativeTimeFormatUnit, number][] = [
-    ["year", 31_536_000],
-    ["month", 2_592_000],
-    ["week", 604_800],
-    ["day", 86_400],
-    ["hour", 3_600],
-    ["minute", 60],
-  ]
-  for (const [unit, size] of units) {
-    if (Math.abs(seconds) >= size) return relativeTime.format(Math.round(seconds / size), unit)
-  }
-  return "just now"
-}
-
-type DocSummary = Pick<Doc, "id" | "title" | "updatedAt">
+import {
+  buildTree,
+  canMoveFolder,
+  countDocs,
+  descendantIds,
+  folderChain,
+  folderPath,
+  loadExpanded,
+  saveExpanded,
+  type DocSummary,
+  type FolderNode,
+} from "@/lib/folders"
+import { cn } from "@/lib/utils"
 
 const HEADER_BUTTON = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
 
-// the open document is a raised card on the grey sidebar
-const DOC_BUTTON =
-  "h-auto gap-2.5 rounded-lg px-2.5 py-2 data-active:bg-background data-active:shadow-xs data-active:ring-1 data-active:ring-sidebar-border data-active:hover:bg-background"
+type NameDialog = { mode: "create"; parentId?: string; moveInto?: TreeItem } | { mode: "rename"; folder: Folder }
 
 export function AppSidebar() {
   const router = useRouter()
@@ -89,20 +83,75 @@ export function AppSidebar() {
   const activeId = params.id
   const [query, setQuery] = useState("")
   const [pendingDelete, setPendingDelete] = useState<DocSummary | null>(null)
+  const [pendingFolderDelete, setPendingFolderDelete] = useState<FolderNode<DocSummary> | null>(null)
+  const [nameDialog, setNameDialog] = useState<NameDialog | null>(null)
+  const [expanded, setExpandedIds] = useState<ReadonlySet<string>>(() => new Set(loadExpanded()))
+  const [revealedFor, setRevealedFor] = useState<string>()
+  const [dragging, setDragging] = useState<TreeItem | null>(null)
+  const [hovered, setHovered] = useState<DropTarget | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const docs = useLiveQuery(async () => {
-    const all = await db.docs.orderBy("updatedAt").reverse().toArray()
-    return all.map(({ id, title, updatedAt }): DocSummary => ({ id, title, updatedAt }))
+  const data = useLiveQuery(async () => {
+    const docs = await db.docs.orderBy("updatedAt").reverse().toArray()
+    const folders = await db.folders.toArray()
+    return {
+      docs: docs.map(({ id, title, updatedAt, folderId }): DocSummary => ({ id, title, updatedAt, folderId })),
+      folders,
+    }
   }, [])
+  const docs = data?.docs
+  const folders = useMemo(() => data?.folders ?? [], [data])
+  const tree = useMemo(() => buildTree(folders, docs ?? []), [folders, docs])
 
-  const filtered = useMemo(() => {
+  const searching = query.trim() !== ""
+  const matches = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    return needle ? docs?.filter((doc) => doc.title.toLowerCase().includes(needle)) : docs
+    return docs?.filter((doc) => doc.title.toLowerCase().includes(needle))
   }, [docs, query])
 
-  const handleNew = async () => {
-    const id = await createDoc()
+  useEffect(() => saveExpanded(expanded), [expanded])
+
+  const setExpanded = useCallback((id: string, open: boolean) => {
+    setExpandedIds((prev) => {
+      if (prev.has(id) === open) return prev
+      const next = new Set(prev)
+      if (open) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
+  const expandAll = useCallback((ids: string[]) => {
+    setExpandedIds((prev) => (ids.every((id) => prev.has(id)) ? prev : new Set([...prev, ...ids])))
+  }, [])
+
+  // open the folders around the current document, once per document so it can still be collapsed
+  const activeDoc = docs?.find((doc) => doc.id === activeId)
+  if (activeDoc && revealedFor !== activeDoc.id) {
+    setRevealedFor(activeDoc.id)
+    expandAll(folderChain(folders, activeDoc.folderId).map((folder) => folder.id))
+  }
+
+  const canMove = useCallback(
+    (item: TreeItem, folderId: string | undefined) =>
+      item.parentId !== folderId && (item.kind === "doc" || canMoveFolder(folders, item.id, folderId)),
+    [folders],
+  )
+
+  const move = useCallback(
+    async (item: TreeItem, folderId: string | undefined) => {
+      if (item.kind === "doc") await moveDoc(item.id, folderId)
+      else if (!(await moveFolder(item.id, folderId))) {
+        toast.error("A folder can’t be moved into itself")
+        return
+      }
+      expandAll(folderChain(folders, folderId).map((folder) => folder.id))
+    },
+    [expandAll, folders],
+  )
+
+  const handleNew = async (folderId?: string) => {
+    const id = await createDoc("", folderId)
     router.push(`/d/${id}`)
   }
 
@@ -127,17 +176,86 @@ export function AppSidebar() {
     if (full) downloadMarkdown(full.content, full.title)
   }
 
+  /** Navigates away when the open document was just deleted. */
+  const leaveIfDeleted = async (deletedIds: string[]) => {
+    if (!activeId || !deletedIds.includes(activeId)) return
+    const next = docs?.find((doc) => !deletedIds.includes(doc.id))
+    router.replace(next ? `/d/${next.id}` : `/d/${await createDoc()}`)
+  }
+
   const confirmDelete = async () => {
     if (!pendingDelete) return
     const { id, title } = pendingDelete
     setPendingDelete(null)
     await deleteDoc(id)
     toast.success(`Deleted “${title}”`)
-    if (id === activeId) {
-      const next = docs?.find((doc) => doc.id !== id)
-      router.replace(next ? `/d/${next.id}` : `/d/${await createDoc()}`)
+    await leaveIfDeleted([id])
+  }
+
+  const confirmDeleteFolder = async (withContents: boolean) => {
+    if (!pendingFolderDelete) return
+    const { folder } = pendingFolderDelete
+    const removedFolders = new Set([folder.id, ...(withContents ? descendantIds(folders, folder.id) : [])])
+    setPendingFolderDelete(null)
+    const deletedDocs = await deleteFolder(folder.id, { withContents })
+    setExpandedIds((prev) => new Set([...prev].filter((id) => !removedFolders.has(id))))
+    toast.success(
+      deletedDocs.length
+        ? `Deleted “${folder.name}” and ${deletedDocs.length} document${deletedDocs.length === 1 ? "" : "s"}`
+        : `Deleted “${folder.name}”`,
+    )
+    await leaveIfDeleted(deletedDocs)
+  }
+
+  const folderDeletion = useMemo((): FolderDeletion | null => {
+    if (!pendingFolderDelete) return null
+    const { folder } = pendingFolderDelete
+    const parent = folders.find((candidate) => candidate.id === folder.parentId)
+    return {
+      name: folder.name,
+      docCount: countDocs(pendingFolderDelete),
+      folderCount: descendantIds(folders, folder.id).size,
+      destination: parent ? `“${parent.name}”` : "the top level",
+    }
+  }, [pendingFolderDelete, folders])
+
+  const submitName = async (name: string) => {
+    const dialog = nameDialog
+    setNameDialog(null)
+    if (!dialog) return
+    if (dialog.mode === "rename") {
+      await renameFolder(dialog.folder.id, name)
+      return
+    }
+    const id = await createFolder(name, dialog.parentId)
+    expandAll(folderChain(folders, dialog.parentId).map((folder) => folder.id))
+    if (dialog.moveInto) {
+      await move(dialog.moveInto, id)
+      setExpanded(id, true)
     }
   }
+
+  const context: SidebarTree = {
+    activeId,
+    tree,
+    isExpanded: (id) => expanded.has(id),
+    setExpanded,
+    dragging,
+    setDragging,
+    hovered,
+    setHovered,
+    canMove,
+    move: (item, folderId) => void move(item, folderId),
+    onNewDoc: (folderId) => void handleNew(folderId),
+    onDuplicateDoc: (doc) => void handleDuplicate(doc),
+    onDownloadDoc: (doc) => void handleDownload(doc),
+    onDeleteDoc: setPendingDelete,
+    onNewFolder: (parentId, moveInto) => setNameDialog({ mode: "create", parentId, moveInto }),
+    onRenameFolder: (folder) => setNameDialog({ mode: "rename", folder }),
+    onDeleteFolder: setPendingFolderDelete,
+  }
+
+  const newFolderParent = nameDialog?.mode === "create" ? folderPath(folders, nameDialog.parentId) : ""
 
   return (
     <Sidebar variant="inset">
@@ -164,7 +282,27 @@ export function AppSidebar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label="New document" onClick={handleNew} className={HEADER_BUTTON}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="New folder"
+                  onClick={() => setNameDialog({ mode: "create" })}
+                  className={HEADER_BUTTON}
+                >
+                  <FolderPlusIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>New folder</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="New document"
+                  onClick={() => void handleNew()}
+                  className={HEADER_BUTTON}
+                >
                   <FilePlusIcon />
                 </Button>
               </TooltipTrigger>
@@ -196,60 +334,41 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Documents</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {filtered === undefined &&
-                // fixed widths: SidebarMenuSkeleton's random widths break hydration
-                ["80%", "65%", "72%", "58%"].map((width) => (
-                  <SidebarMenuItem key={width} className="px-2 py-2">
-                    <Skeleton className="h-4" style={{ width }} />
-                  </SidebarMenuItem>
-                ))}
-              {filtered?.length === 0 && (
-                <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                  {query ? "No matching documents" : "No documents yet"}
-                </p>
-              )}
-              {filtered?.map((doc) => (
-                <SidebarMenuItem key={doc.id}>
-                  <SidebarMenuButton asChild isActive={doc.id === activeId} className={DOC_BUTTON}>
-                    <Link href={`/d/${doc.id}`}>
-                      <FileTextIcon className="mt-0.5 self-start text-muted-foreground group-data-active/menu-button:text-foreground" />
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate">{doc.title}</span>
-                        <span className="text-xs text-muted-foreground">{formatUpdated(doc.updatedAt)}</span>
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover aria-label={`Actions for ${doc.title}`}>
-                        <MoreHorizontalIcon />
-                      </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" align="start" className="w-44">
-                      <DropdownMenuItem onSelect={() => void handleDuplicate(doc)}>
-                        <CopyIcon />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => void handleDownload(doc)}>
-                        <FileDownIcon />
-                        Download .md
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem variant="destructive" onSelect={() => setPendingDelete(doc)}>
-                        <Trash2Icon />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <SidebarTreeContext value={context}>
+          {/* while searching, matches are listed flat, so there is nothing to drop onto */}
+          <DocumentsGroup droppable={!searching}>
+            <SidebarGroupLabel>Documents</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {data === undefined &&
+                  // fixed widths: SidebarMenuSkeleton's random widths break hydration
+                  ["80%", "65%", "72%", "58%"].map((width) => (
+                    <SidebarMenuItem key={width} className="px-2 py-2">
+                      <Skeleton className="h-4" style={{ width }} />
+                    </SidebarMenuItem>
+                  ))}
+                {data !== undefined &&
+                  (searching ? matches?.length === 0 : tree.folders.length === 0 && tree.docs.length === 0) && (
+                    <p className="px-2 py-6 text-center text-sm text-muted-foreground">
+                      {searching ? "No matching documents" : "No documents yet"}
+                    </p>
+                  )}
+                {searching
+                  ? matches?.map((doc) => <DocItem key={doc.id} doc={doc} path={folderPath(folders, doc.folderId)} />)
+                  : data !== undefined && (
+                      <>
+                        {tree.folders.map((node) => (
+                          <FolderItem key={node.folder.id} node={node} />
+                        ))}
+                        {tree.docs.map((doc) => (
+                          <DocItem key={doc.id} doc={doc} />
+                        ))}
+                      </>
+                    )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </DocumentsGroup>
+        </SidebarTreeContext>
       </SidebarContent>
 
       <SidebarFooter>
@@ -280,6 +399,40 @@ export function AppSidebar() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DeleteFolderDialog
+        target={folderDeletion}
+        onOpenChange={(open) => !open && setPendingFolderDelete(null)}
+        onConfirm={(withContents) => void confirmDeleteFolder(withContents)}
+      />
+
+      <FolderNameDialog
+        open={nameDialog !== null}
+        onOpenChange={(open) => !open && setNameDialog(null)}
+        title={nameDialog?.mode === "rename" ? "Rename folder" : "New folder"}
+        description={newFolderParent ? `Inside “${newFolderParent}”` : undefined}
+        submitLabel={nameDialog?.mode === "rename" ? "Rename" : "Create"}
+        defaultName={nameDialog?.mode === "rename" ? nameDialog.folder.name : ""}
+        onSubmit={(name) => void submitName(name)}
+      />
     </Sidebar>
+  )
+}
+
+/** The document list; areas outside any folder are the drop zone for the top level. */
+function DocumentsGroup({ droppable, children }: { droppable: boolean; children: ReactNode }) {
+  const { setHovered } = useSidebarTree()
+  const drop = useDropTarget(undefined)
+
+  return (
+    <SidebarGroup
+      className={cn("flex-1 rounded-lg transition-colors", droppable && drop.highlight && "bg-sidebar-accent/60")}
+      {...(droppable ? drop.props : {})}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHovered(null)
+      }}
+    >
+      {children}
+    </SidebarGroup>
   )
 }
