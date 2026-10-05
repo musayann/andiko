@@ -5,6 +5,7 @@ import { useLayoutEffect, useMemo, useRef, type MouseEvent, type RefObject } fro
 import { toast } from "sonner"
 
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { useTheme } from "@/hooks/use-theme"
 import { renderMarkdown } from "@/lib/markdown/renderer"
 import { sanitizeHtml } from "@/lib/markdown/sanitize"
 import { copyCodeBlock, enhancePreview, patchPreview } from "@/lib/preview-dom"
@@ -23,6 +24,7 @@ interface PreviewPaneProps {
 export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRendered }: PreviewPaneProps) {
   const articleRef = useRef<HTMLElement>(null)
   const source = useDebouncedValue(content, 120)
+  const { resolvedTheme } = useTheme()
 
   const { html, meta, headings } = useMemo(() => {
     const result = renderMarkdown(source)
@@ -33,9 +35,9 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
     const article = articleRef.current
     if (!article) return
     patchPreview(article, html)
-    enhancePreview(article)
+    enhancePreview(article, resolvedTheme)
     onRendered?.()
-  }, [html, onRendered])
+  }, [html, resolvedTheme, onRendered])
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement

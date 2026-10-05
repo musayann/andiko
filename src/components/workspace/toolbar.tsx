@@ -82,7 +82,7 @@ export function Toolbar({
         </span>
       </div>
 
-      {/* segmented control: the active mode is a raised white tab on a grey track. Styled via
+      {/* segmented control: the active mode is a raised tab on a grey track. Styled via
           aria-checked because the tooltip trigger overwrites the item's data-state */}
       <ToggleGroup
         type="single"
@@ -98,7 +98,7 @@ export function Toolbar({
               <ToggleGroupItem
                 value={value}
                 aria-label={label}
-                className="h-6 min-w-6 gap-1.5 rounded-md px-2 text-[0.8rem] text-muted-foreground hover:bg-transparent hover:text-foreground aria-checked:bg-background aria-checked:text-foreground aria-checked:shadow-xs aria-checked:ring-1 aria-checked:ring-foreground/5 [&_svg:not([class*='size-'])]:size-3.5"
+                className="h-6 min-w-6 gap-1.5 rounded-md px-2 text-[0.8rem] text-muted-foreground hover:bg-transparent hover:text-foreground aria-checked:bg-background aria-checked:text-foreground aria-checked:shadow-xs aria-checked:ring-1 aria-checked:ring-foreground/5 dark:aria-checked:bg-input [&_svg:not([class*='size-'])]:size-3.5"
               >
                 <Icon />
                 <span className="hidden lg:inline">{label}</span>

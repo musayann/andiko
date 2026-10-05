@@ -8,8 +8,10 @@ import "katex/dist/katex.min.css"
 import "@/styles/document.css"
 import "./globals.css"
 
+import { ThemeSync } from "@/components/theme-sync"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { themeScript } from "@/lib/theme"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,8 +50,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-RW" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    // the head script adds `.dark` before hydration, so React must accept the class it finds
+    <html
+      lang="en-RW"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="h-full overflow-hidden">
+        <ThemeSync />
         <TooltipProvider delayDuration={400}>{children}</TooltipProvider>
         <Toaster position="bottom-right" />
       </body>

@@ -1,6 +1,7 @@
 import morphdom from "morphdom"
 
 import { getCachedMermaid, renderMermaid } from "./mermaid"
+import type { ResolvedTheme } from "./theme"
 
 const COPY_LABEL = "Copy"
 
@@ -34,9 +35,10 @@ export function patchPreview(root: HTMLElement, html: string) {
   })
 }
 
-function showMermaid(block: HTMLElement, source: string, svg: string) {
+function showMermaid(block: HTMLElement, source: string, theme: ResolvedTheme, svg: string) {
   block.innerHTML = svg
   block.dataset.renderedSource = source
+  block.dataset.renderedTheme = theme
 }
 
 function showMermaidError(block: HTMLElement, error: unknown) {
@@ -48,20 +50,20 @@ function showMermaidError(block: HTMLElement, error: unknown) {
   delete block.dataset.renderedSource
 }
 
-/** Renders Mermaid diagrams and adds copy buttons after each patch. */
-export function enhancePreview(root: HTMLElement) {
+/** Renders Mermaid diagrams in `theme` and adds copy buttons after each patch. */
+export function enhancePreview(root: HTMLElement, theme: ResolvedTheme) {
   for (const block of root.querySelectorAll<HTMLElement>(".mermaid-block")) {
     const source = mermaidSource(block)
-    if (block.dataset.renderedSource === source) continue
+    if (block.dataset.renderedSource === source && block.dataset.renderedTheme === theme) continue
 
-    const cached = getCachedMermaid(source)
+    const cached = getCachedMermaid(source, theme)
     if (cached) {
-      showMermaid(block, source, cached)
+      showMermaid(block, source, theme, cached)
       continue
     }
-    renderMermaid(source).then(
+    renderMermaid(source, theme).then(
       (svg) => {
-        if (block.isConnected && mermaidSource(block) === source) showMermaid(block, source, svg)
+        if (block.isConnected && mermaidSource(block) === source) showMermaid(block, source, theme, svg)
       },
       (error) => {
         if (block.isConnected && mermaidSource(block) === source) showMermaidError(block, error)
@@ -102,7 +104,8 @@ export async function buildStaticHtml(html: string): Promise<string> {
   await Promise.all(
     Array.from(root.querySelectorAll<HTMLElement>(".mermaid-block"), async (block) => {
       try {
-        block.innerHTML = await renderMermaid(mermaidSource(block))
+        // exports are printed on white, so diagrams are always light
+        block.innerHTML = await renderMermaid(mermaidSource(block), "light")
       } catch (error) {
         showMermaidError(block, error)
       }

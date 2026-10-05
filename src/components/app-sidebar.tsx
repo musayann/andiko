@@ -18,6 +18,7 @@ import { useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { LogoMark } from "@/components/logo"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,7 +79,7 @@ type DocSummary = Pick<Doc, "id" | "title" | "updatedAt">
 
 const HEADER_BUTTON = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
 
-// the open document is a raised white card on the grey sidebar
+// the open document is a raised card on the grey sidebar
 const DOC_BUTTON =
   "h-auto gap-2.5 rounded-lg px-2.5 py-2 data-active:bg-background data-active:shadow-xs data-active:ring-1 data-active:ring-sidebar-border data-active:hover:bg-background"
 
@@ -252,6 +253,10 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <div className="flex items-center justify-between gap-2 px-2">
+          <span className="text-xs text-muted-foreground">Theme</span>
+          <ThemeSwitcher />
+        </div>
         <p className="flex items-center gap-2 px-2 pb-1 text-xs text-muted-foreground">
           <HardDriveIcon className="size-3.5" />
           Documents are stored in this browser

@@ -2,9 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* The app is light-only. Keep this: it ties the `dark:` utilities in the shadcn
-   components to a `.dark` class that is never set. Without it Tailwind falls back
-   to prefers-color-scheme and they would switch on under a dark OS theme. */
+/* `dark:` utilities follow the `.dark` class on <html> (see src/lib/theme.ts), not
+   prefers-color-scheme: the app stays light unless dark or system is chosen. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -56,6 +55,7 @@
 }
 
 :root {
+  color-scheme: light;
   --background: oklch(1 0 0);
   --foreground: oklch(0.21 0.006 285.885);
   /* logo colors */
@@ -115,6 +115,38 @@
   --cm-search: #e5c07b4d;
 }
 
+/* Zinc greys. Surfaces keep their light-mode order: the sidebar is the darkest
+   layer and the open document card and active tabs sit raised above it. */
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.21 0.006 285.885);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.235 0.006 285.9);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.235 0.006 285.9);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --sidebar: oklch(0.17 0.005 285.85);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.92 0.004 286.32);
+  --sidebar-primary-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-accent: oklch(0.24 0.006 285.9);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.552 0.016 285.938);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -142,6 +174,8 @@
     height: auto !important;
     overflow: visible !important;
     background: #fff !important;
+    /* prints are always light, whatever the theme */
+    color-scheme: light !important;
   }
 
   body > :not(#print-root) {

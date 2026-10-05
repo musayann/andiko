@@ -1,5 +1,7 @@
 import type { Mermaid } from "mermaid"
 
+import type { ResolvedTheme } from "./theme"
+
 let loader: Promise<Mermaid> | null = null
 // mermaid.initialize() is global, so renders run one at a time
 let queue: Promise<unknown> = Promise.resolve()
@@ -13,20 +15,23 @@ function loadMermaid(): Promise<Mermaid> {
   return loader
 }
 
-export function getCachedMermaid(source: string): string | undefined {
-  return cache.get(source)
+const cacheKey = (source: string, theme: ResolvedTheme) => `${theme}:${source}`
+
+export function getCachedMermaid(source: string, theme: ResolvedTheme): string | undefined {
+  return cache.get(cacheKey(source, theme))
 }
 
 /** Renders a diagram to SVG markup. Rejects with mermaid's parse error message. */
-export function renderMermaid(source: string): Promise<string> {
-  const cached = cache.get(source)
+export function renderMermaid(source: string, theme: ResolvedTheme): Promise<string> {
+  const key = cacheKey(source, theme)
+  const cached = cache.get(key)
   if (cached) return Promise.resolve(cached)
 
   const job = queue.then(async () => {
     const mermaid = await loadMermaid()
     mermaid.initialize({
       startOnLoad: false,
-      theme: "default",
+      theme: theme === "dark" ? "dark" : "default",
       securityLevel: "strict",
       fontFamily: '"Source Sans 3 Variable", "Source Sans Pro", sans-serif',
     })
@@ -34,7 +39,7 @@ export function renderMermaid(source: string): Promise<string> {
     try {
       const { svg } = await mermaid.render(id, source)
       if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value!)
-      cache.set(source, svg)
+      cache.set(key, svg)
       return svg
     } finally {
       // mermaid leaves its scratch element behind when rendering fails

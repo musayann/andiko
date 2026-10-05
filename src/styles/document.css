@@ -64,6 +64,57 @@
   print-color-adjust: exact;
 }
 
+/* Dark palette for the preview when the app's `.dark` theme is on. Screen only:
+   print and PDF always use the light palette above. */
+@media screen {
+  .dark .markdown-body {
+    --md-fg: #d4d4d8;
+    --md-muted: #a1a1aa;
+    --md-bg: #18181b; /* the app's dark background */
+    --md-link: #58a6ff;
+    --md-border: #2e2e33;
+    --md-table-border: #3f3f46;
+    --md-table-stripe: #1f1f23;
+    --md-quote-border: #3f3f46;
+    --md-hr: #3f3f46;
+    --md-code-bg: #222226;
+    --md-code-inline-bg: rgba(255, 255, 255, 0.08);
+    --md-gutter-fg: #71717a;
+    --md-gutter-border: #3f3f46;
+    --md-mark-bg: rgba(234, 179, 8, 0.35);
+    --md-kbd-bg: #27272a;
+    --md-kbd-border: #52525b;
+
+    --md-info-bg: #032830;
+    --md-info-fg: #6edff6;
+    --md-info-border: #087990;
+    --md-success-bg: #051b11;
+    --md-success-fg: #75b798;
+    --md-success-border: #0f5132;
+    --md-warning-bg: #332701;
+    --md-warning-fg: #ffda6a;
+    --md-warning-border: #997404;
+    --md-danger-bg: #2c0b0e;
+    --md-danger-fg: #ea868f;
+    --md-danger-border: #842029;
+
+    /* highlight.js — GitHub dark */
+    --hl-fg: #c9d1d9;
+    --hl-keyword: #ff7b72;
+    --hl-title: #d2a8ff;
+    --hl-attr: #79c0ff;
+    --hl-string: #a5d6ff;
+    --hl-builtin: #ffa657;
+    --hl-comment: #8b949e;
+    --hl-name: #7ee787;
+    --hl-bullet: #f2cc60;
+    --hl-add-fg: #aff5b4;
+    --hl-add-bg: #033a16;
+    --hl-del-fg: #ffdcd7;
+    --hl-del-bg: #67060c;
+  }
+}
+
 .markdown-body > :first-child {
   margin-top: 0 !important;
 }
