@@ -50,6 +50,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -487,14 +488,17 @@ export function AppSidebar() {
           </button>
         </div>
         {privacyPolicy && (
-          <nav aria-label="Legal" className="flex gap-3 px-2 pb-1 text-[11px] text-muted-foreground/80">
-            <Link href="/privacy" className={LEGAL_LINK}>
-              Privacy
-            </Link>
-            <Link href="/terms" className={LEGAL_LINK}>
-              Terms
-            </Link>
-          </nav>
+          <>
+            <SidebarSeparator />
+            <nav aria-label="Legal" className="flex gap-3 px-2 pb-1 text-[11px] text-muted-foreground/80">
+              <Link href="/privacy" className={LEGAL_LINK}>
+                Privacy
+              </Link>
+              <Link href="/terms" className={LEGAL_LINK}>
+                Terms
+              </Link>
+            </nav>
+          </>
         )}
       </SidebarFooter>
       <SidebarRail />
