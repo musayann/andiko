@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import { db, saveDocContent, setLastDocId } from "@/lib/db"
 
-export type SaveState = "saved" | "saving" | "unsaved"
+// no "saving" state: IndexedDB writes are quick enough that showing one only flickers
+export type SaveState = "saved" | "unsaved"
 
 type LoadState =
   | { status: "loading" }
@@ -79,7 +80,6 @@ export function useDoc(id: string) {
     const value = pending.current
     if (value === null) return
     pending.current = null
-    setSaveState("saving")
     try {
       await saveDocContent(id, value)
       setSaveState(pending.current === null ? "saved" : "unsaved")

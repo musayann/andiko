@@ -4,33 +4,8 @@ import { useLiveQuery } from "dexie-react-hooks"
 import { useEffect } from "react"
 
 import { db, needsSync } from "@/lib/db"
-import { syncSharedDocs } from "@/lib/share/client"
+import { cancelSync, scheduleSync, syncNow } from "@/lib/share/scheduler"
 import { getOwnerToken } from "@/lib/share/token"
-
-const SYNC_DELAY = 2000
-const RETRY_DELAY = 30_000
-
-let timer: ReturnType<typeof setTimeout> | undefined
-
-/** Syncs after `delay` unless a sync is already due: a throttle, so a long typing session still syncs. */
-function scheduleSync(delay: number) {
-  if (timer !== undefined) return
-  timer = setTimeout(async () => {
-    // cleared before the push so saves made during it schedule the next one
-    timer = undefined
-    if (!(await syncSharedDocs().catch(() => false))) scheduleSync(RETRY_DELAY)
-  }, delay)
-}
-
-function cancelSync() {
-  clearTimeout(timer)
-  timer = undefined
-}
-
-function syncNow() {
-  cancelSync()
-  scheduleSync(0)
-}
 
 /**
  * Pushes local edits of published documents to their public copies. Unsynced
@@ -51,7 +26,7 @@ export function ShareSync() {
 
   useEffect(() => {
     if (!pending) return
-    scheduleSync(SYNC_DELAY)
+    scheduleSync()
     const onVisibility = () => {
       if (document.visibilityState === "hidden") syncNow()
     }

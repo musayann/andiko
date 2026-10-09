@@ -1,7 +1,6 @@
 "use client"
 
 import type { EditorView } from "@codemirror/view"
-import { useLiveQuery } from "dexie-react-hooks"
 import { FileQuestionIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
@@ -15,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useDoc, type SaveState } from "@/hooks/use-doc"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useScrollSync } from "@/hooks/use-scroll-sync"
-import { db, needsSync } from "@/lib/db"
+import { useShareStatus, type ShareStatus, type ShareSyncState } from "@/hooks/use-share-status"
 import { downloadMarkdown, printDocument } from "@/lib/export"
 import { getDocTitle } from "@/lib/title"
 import { cn } from "@/lib/utils"
@@ -24,7 +23,7 @@ import { ExportPdfDialog } from "./export-pdf-dialog"
 import { FormatBar } from "./format-bar"
 import { PreviewPane } from "./preview-pane"
 import { ShareDialog } from "./share-dialog"
-import { Toolbar } from "./toolbar"
+import { Toolbar, type DocStatus } from "./toolbar"
 import {
   loadScrollSync,
   loadSplit,
@@ -47,6 +46,19 @@ function layoutFor(mode: ViewMode, split: number): Layout {
   if (mode === "edit") return { editor: 100, preview: 0 }
   if (mode === "view") return { editor: 0, preview: 100 }
   return { editor: split, preview: 100 - split }
+}
+
+/** Local saving first, then, for a published document, whether its public copy has caught up. */
+function docStatus(saveState: SaveState, { shareId, sync }: ShareStatus): DocStatus {
+  if (saveState !== "saved" || shareId === undefined) return saveState
+  if (sync === "synced") return "synced"
+  return sync === "failing" ? "not-synced" : "saved"
+}
+
+/** The public copy's state for the share dialog. */
+function publicCopySync({ sync }: ShareStatus, saveState: SaveState): ShareSyncState {
+  // edits still on their way to IndexedDB are on their way to the public copy too
+  return sync === "synced" && saveState !== "saved" ? "syncing" : sync
 }
 
 /** `sharing` is false when the server has no database to publish to. */
@@ -129,10 +141,7 @@ function Editor({ id, sharing, initialContent, fileName, content, setContent, sa
   // phones get Edit/View only; the chosen mode is kept for larger screens
   const effectiveMode: ViewMode = isMobile && mode === "split" ? "edit" : mode
   const title = useMemo(() => getDocTitle(content, fileName), [content, fileName])
-  const share = useLiveQuery(async () => {
-    const doc = await db.docs.get(id)
-    return { shareId: doc?.shareId, pending: doc !== undefined && needsSync(doc) }
-  }, [id])
+  const share = useShareStatus(id)
 
   const setMode = useCallback((next: ViewMode) => {
     setModeState(next)
@@ -200,13 +209,13 @@ function Editor({ id, sharing, initialContent, fileName, content, setContent, sa
     <div className="flex h-full min-h-0 flex-col">
       <Toolbar
         title={title}
-        saveState={saveState}
+        status={docStatus(saveState, share)}
         mode={effectiveMode}
         onModeChange={setMode}
         allowSplit={!isMobile}
         scrollSync={scrollSync}
         onScrollSyncChange={setScrollSync}
-        shared={share?.shareId !== undefined}
+        shared={share.shareId !== undefined}
         onShare={sharing ? () => setShareOpen(true) : undefined}
         onExportPdf={() => setPdfOpen(true)}
         onPrint={handlePrint}
@@ -253,8 +262,8 @@ function Editor({ id, sharing, initialContent, fileName, content, setContent, sa
           onOpenChange={setShareOpen}
           docId={id}
           title={title}
-          shareId={share?.shareId}
-          pending={share?.pending ?? false}
+          shareId={share.shareId}
+          sync={publicCopySync(share, saveState)}
           flush={flush}
         />
       )}
