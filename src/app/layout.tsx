@@ -11,6 +11,7 @@ import "./globals.css"
 import { ThemeSync } from "@/components/theme-sync"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { siteDescription, siteName, siteTitle, siteUrl } from "@/lib/site"
 import { themeScript } from "@/lib/theme"
 
 const geistSans = Geist({
@@ -23,28 +24,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
-const title = "Andiko · Markdown editor with live preview and PDF export"
-const description =
-  "A local-first Markdown editor with live preview, KaTeX maths, Mermaid diagrams and PDF export. No account needed: your documents stay in your browser."
-
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: title,
+    default: siteTitle,
     // matches the title the workspace sets client-side
-    template: "%s · Andiko",
+    template: `%s · ${siteName}`,
   },
-  description,
-  applicationName: "Andiko",
+  description: siteDescription,
+  applicationName: siteName,
   openGraph: {
     type: "website",
-    siteName: "Andiko",
-    title,
-    description,
+    siteName,
+    url: "/",
+    title: siteTitle,
+    description: siteDescription,
   },
   twitter: {
-    card: "summary",
-    title,
-    description,
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
   },
 }
 
@@ -59,7 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="h-full overflow-hidden">
+      <body className="h-full">
         <ThemeSync />
         <TooltipProvider delayDuration={400}>{children}</TooltipProvider>
         <Toaster position="bottom-right" />

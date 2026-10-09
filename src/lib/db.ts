@@ -3,6 +3,7 @@ import { nanoid } from "nanoid"
 
 import type { ImportFolder } from "./archive"
 import { canMoveFolder, descendantIds } from "./folders"
+import { RESUME_COOKIE } from "./site"
 import { getDocTitle } from "./title"
 
 export interface Doc {
@@ -164,6 +165,8 @@ export function getLastDocId(): string | null {
 export function setLastDocId(id: string) {
   try {
     localStorage.setItem(LAST_DOC_KEY, id)
+    // lets the server send returning visitors from the landing page back to the editor
+    document.cookie = `${RESUME_COOKIE}=1; path=/; max-age=31536000; samesite=lax`
   } catch {
     // storage unavailable (private mode); not critical
   }

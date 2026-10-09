@@ -36,6 +36,12 @@ The first visit seeds a "Welcome" document that shows every supported feature.
 | `pnpm lint`      | ESLint                            |
 | `pnpm typecheck` | Generate route types and run `tsc` |
 
+## Deployment
+
+Canonical links, the sitemap, `robots.txt` and Open Graph images use `https://andiko.app`. If you self-host on another domain, set `NEXT_PUBLIC_SITE_URL` to its origin (e.g. `https://notes.example.com`).
+
+`/` is a static landing page for new visitors and search engines. Once someone has opened a document, a cookie makes `/` redirect them to `/d`, which reopens their last document.
+
 ## PDF export
 
 `POST /api/export/pdf` receives the rendered document HTML from the client. It loads it into headless Chrome with the same stylesheet as the preview (`src/styles/document.css`) and returns the PDF. Mermaid diagrams are rendered in the browser first.
@@ -63,7 +69,8 @@ The export HTML comes from the client, so the route treats it as untrusted:
 ```
 src/
   app/
-    page.tsx                  opens the last document (or seeds the welcome doc)
+    page.tsx                  landing page (also sitemap.ts, robots.ts, manifest.ts, opengraph-image.tsx)
+    d/page.tsx                opens the last document (or seeds the welcome doc)
     d/[id]/page.tsx           editor workspace
     api/export/pdf/route.ts   PDF rendering endpoint
   components/
@@ -80,6 +87,7 @@ src/
     folders.ts                folder tree helpers (nesting, cycle checks, paths)
     pdf/                      Chrome launcher, HTML template, URL guard
   styles/document.css         document look (preview, print, PDF)
+  proxy.ts                    sends returning visitors from / straight to their last document
 public/welcome.md             feature showcase
 ```
 

@@ -156,6 +156,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* The editor shell fills the viewport and the landing page scrolls normally. Mermaid
+     measures diagrams in a temporary node on <body>, which must not make the editor scroll. */
+  body:has([data-slot="sidebar-wrapper"]) {
+    overflow: hidden;
+  }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
