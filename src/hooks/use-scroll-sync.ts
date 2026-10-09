@@ -3,12 +3,14 @@ import { useCallback, useEffect, useRef, type RefObject } from "react"
 
 import {
   collectAnchors,
-  editorTopLine,
-  isAtBottom,
+  editorLineAt,
+  editorOffsetOf,
+  editorScrollHeight,
   lineToOffset,
   offsetToLine,
-  scrollEditorToLine,
+  syncedScrollTop,
   type LineAnchor,
+  type ScrollPane,
 } from "@/lib/scroll-sync"
 
 type Pane = "editor" | "preview"
@@ -35,6 +37,21 @@ export function useScrollSync(
 
     const anchors = () => (anchorsRef.current ??= collectAnchors(preview, article, view.state.doc.lines))
 
+    const editorPane = (): ScrollPane => ({
+      scrollTop: view.scrollDOM.scrollTop,
+      clientHeight: view.scrollDOM.clientHeight,
+      scrollHeight: editorScrollHeight(view),
+      lineAt: (y) => editorLineAt(view, y),
+      offsetOf: (line) => editorOffsetOf(view, line),
+    })
+    const previewPane = (): ScrollPane => ({
+      scrollTop: preview.scrollTop,
+      clientHeight: preview.clientHeight,
+      scrollHeight: preview.scrollHeight,
+      lineAt: (y) => offsetToLine(anchors(), y),
+      offsetOf: (line) => lineToOffset(anchors(), line),
+    })
+
     // scrolling one pane programmatically fires its scroll event; ignore those echoes
     let ignored: Pane | null = null
     let ignoreTimer: ReturnType<typeof setTimeout> | undefined
@@ -53,15 +70,8 @@ export function useScrollSync(
     const onEditorScroll = () => {
       if (ignored === "editor") return
       schedule(() => {
-        const scroller = view.scrollDOM
-        const top =
-          scroller.scrollTop <= 0
-            ? 0
-            : isAtBottom(scroller)
-              ? preview.scrollHeight
-              : lineToOffset(anchors(), editorTopLine(view))
         ignore("preview")
-        preview.scrollTop = top
+        preview.scrollTop = syncedScrollTop(editorPane(), previewPane())
       })
     }
 
@@ -69,9 +79,7 @@ export function useScrollSync(
       if (ignored === "preview") return
       schedule(() => {
         ignore("editor")
-        if (preview.scrollTop <= 0) view.scrollDOM.scrollTop = 0
-        else if (isAtBottom(preview)) view.scrollDOM.scrollTop = view.scrollDOM.scrollHeight
-        else scrollEditorToLine(view, offsetToLine(anchors(), preview.scrollTop))
+        view.scrollDOM.scrollTop = syncedScrollTop(previewPane(), editorPane())
       })
     }
 
