@@ -21,10 +21,20 @@ export const contactEmail = setting(process.env.NEXT_PUBLIC_CONTACT_EMAIL)
 
 /**
  * The details the privacy policy (/privacy) has to name, or null when any is missing:
- * the policy and the links to it are then left out rather than published incomplete.
+ * the policy, the terms (/terms) and the links to them are then left out rather than
+ * published incomplete.
  */
 export const privacyPolicy = (() => {
   const operatorName = setting(process.env.NEXT_PUBLIC_OPERATOR_NAME)
   const databaseRegion = setting(process.env.NEXT_PUBLIC_DATABASE_REGION)
-  return operatorName && contactEmail && databaseRegion ? { operatorName, contactEmail, databaseRegion } : null
+  if (!operatorName || !contactEmail || !databaseRegion) return null
+  return {
+    operatorName,
+    // a company's registered office and its entry in the companies register; optional, as
+    // an individual running an instance has neither to show
+    operatorAddress: setting(process.env.NEXT_PUBLIC_OPERATOR_ADDRESS),
+    operatorRegistration: setting(process.env.NEXT_PUBLIC_OPERATOR_REGISTRATION),
+    contactEmail,
+    databaseRegion,
+  }
 })()

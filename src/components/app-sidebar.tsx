@@ -7,7 +7,6 @@ import {
   FolderPlusIcon,
   HardDriveIcon,
   SearchIcon,
-  ShieldCheckIcon,
   UploadIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -89,6 +88,8 @@ import { cn } from "@/lib/utils"
 const HEADER_BUTTON = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
 const FOOTER_LINK =
   "flex items-center gap-2 rounded-sm font-medium underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+const LEGAL_LINK =
+  "rounded-sm underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-sidebar-ring"
 
 const isZip = (file: File) => /\.zip$/i.test(file.name)
 
@@ -484,13 +485,17 @@ export function AppSidebar() {
             <DownloadIcon className="size-3.5 shrink-0" />
             Export all as .zip
           </button>
-          {privacyPolicy && (
-            <Link href="/privacy" className={FOOTER_LINK}>
-              <ShieldCheckIcon className="size-3.5 shrink-0" />
-              Privacy policy
-            </Link>
-          )}
         </div>
+        {privacyPolicy && (
+          <nav aria-label="Legal" className="flex gap-3 px-2 pb-1 text-[11px] text-muted-foreground/80">
+            <Link href="/privacy" className={LEGAL_LINK}>
+              Privacy
+            </Link>
+            <Link href="/terms" className={LEGAL_LINK}>
+              Terms
+            </Link>
+          </nav>
+        )}
       </SidebarFooter>
       <SidebarRail />
 
