@@ -48,7 +48,10 @@ export function ExportPdfDialog({ open, onOpenChange, content, title }: ExportPd
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Export PDF</DialogTitle>
-          <DialogDescription>Downloads “{title}” as a PDF with selectable text.</DialogDescription>
+          <DialogDescription>
+            Downloads “{title}” as a PDF with selectable text. The document is sent to our server to create the PDF,
+            and isn’t kept there.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">

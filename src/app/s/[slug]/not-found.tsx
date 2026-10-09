@@ -9,7 +9,7 @@ export default function SharedDocumentNotFound() {
       <LinkIcon className="size-10 text-muted-foreground" />
       <h1 className="text-lg font-medium">Document not found</h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        This link doesn’t exist, or its owner stopped sharing the document.
+        This link doesn’t exist, or the document is no longer shared.
       </p>
       <Button asChild variant="outline">
         <Link href="/">Go to Andiko</Link>

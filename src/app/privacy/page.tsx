@@ -6,32 +6,37 @@ import { LegalPage, OperatorDetails } from "@/components/legal-page"
 import { privacyPolicy, repoUrl, siteName } from "@/lib/site"
 
 // Written to the GDPR's transparency requirements, which also covers most other privacy laws.
+// It cites no particular law, since which one applies depends on where the operator is
+// established and whom it targets, and an article reference reads as accepting that law.
 // Keep it in step with what the code stores: src/lib/db.ts, src/lib/share/, the cookies in
 // src/lib/db.ts and src/components/ui/sidebar.tsx, the localStorage keys prefixed "andiko:",
 // and the remote images that src/lib/security/shared-page-policy.ts allows.
 // The operator details come from NEXT_PUBLIC_* settings (src/lib/site.ts); the hosting
 // providers named below are the ones this project is built for (Vercel and Neon), and the
 // 30-day limits are the longest log retention and restore history those providers offer.
+// Neon's data processing agreement covers every plan, but Vercel's only covers Pro and
+// Enterprise, so the policy claims none for Vercel and stays true on the Hobby plan.
 
 const UPDATED = "9 October 2026"
 
 export const metadata: Metadata = {
   title: "Privacy policy",
-  description: `What ${siteName} stores, where, and for how long. Documents stay in your browser unless you share them.`,
+  description: `What ${siteName} stores, where, and for how long. Documents are saved in your browser, and only shared ones are stored on our server.`,
   alternates: { canonical: "/privacy" },
 }
 
 export default function PrivacyPage() {
   // a policy that can't say who is responsible or where data lives isn't published at all
   if (!privacyPolicy) notFound()
-  const { operatorName, operatorAddress, operatorRegistration, contactEmail, databaseRegion } = privacyPolicy
+  const { operatorName, operatorAddress, operatorRegistration, contactEmail, databaseRegion, serverRegion } =
+    privacyPolicy
   const mail = <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
 
   return (
     <LegalPage title="Privacy policy" updated={UPDATED}>
       <h2>In short</h2>
       <ul>
-        <li>Your documents are stored in your browser, not on our servers.</li>
+        <li>Your documents are saved in your browser.</li>
         <li>
           A document reaches our server only when you <strong>share</strong> it (it is stored until you stop
           sharing) or <strong>export it as a PDF</strong> (it is processed and discarded).
@@ -49,8 +54,9 @@ export default function PrivacyPage() {
 
       <h2>What stays in your browser</h2>
       <p>
-        These never leave your device unless you share or export a document. Clearing your browser’s data for this
-        site deletes them, and we cannot recover them.
+        These are kept on your device. A document leaves it only when you share or export it, and the two cookies
+        below are sent to our server with each request but hold only a setting. Clearing your browser’s data for
+        this site deletes them, and we cannot recover them.
       </p>
       <ul>
         <li>
@@ -84,9 +90,9 @@ export default function PrivacyPage() {
       <ul>
         <li>its title and full text, updated each time you edit it;</li>
         <li>
-          a one-way fingerprint (SHA-256 hash) of your owner key, so only your browser can change or remove it.
-          The key itself is never stored. The fingerprint is the same for every document you share from one
-          browser, so it shows which documents came from the same browser, but not who you are;
+          a one-way fingerprint (SHA-256 hash) of your owner key, so only your browser can edit it or stop sharing
+          it. The key itself is never stored. The fingerprint is the same for every document you share from one
+          browser, so it links them together. On its own it doesn’t say who you are;
         </li>
         <li>when it was shared and last updated.</li>
       </ul>
@@ -97,10 +103,11 @@ export default function PrivacyPage() {
         apps) show it too. Don’t share anything you want to keep private.
       </p>
       <p>
-        We keep a shared document until you stop sharing it or delete it. It is then removed from our database
-        straight away, and from our database provider’s restore history within 30 days. If you lose your owner key
-        (for example by clearing your browser data), you can no longer remove it yourself: email {mail} with the
-        link and we will remove it.
+        We keep a shared document until you stop sharing it, delete it, or we remove it under our{" "}
+        <Link href="/terms">terms of use</Link>. It is then removed from our database straight away, unless the law
+        requires us to keep it, and from our database provider’s restore history within 30 days. If you lose your
+        owner key (for example by clearing your browser data), you can no longer remove it yourself: email {mail} with
+        the link, and we will remove it once we’re reasonably satisfied that you shared it.
       </p>
 
       <h3>PDF export</h3>
@@ -114,7 +121,8 @@ export default function PrivacyPage() {
       <p>
         Like any website, our hosting provider records technical details of each request, such as your IP address,
         browser type and the page requested. These logs are used to keep the service running and secure, and are
-        deleted after 30 days at most.
+        available to us for 30 days at most. Vercel may also keep its own records of requests, under its privacy
+        policy.
       </p>
 
       <h2>Images and links to other websites</h2>
@@ -136,15 +144,21 @@ export default function PrivacyPage() {
       <ul>
         <li>
           <strong>To provide what you ask for</strong>: publishing and updating shared documents, and creating
-          PDFs under our <Link href="/terms">terms of use</Link> (performance of a contract, GDPR Art. 6(1)(b)).
+          PDFs under our <Link href="/terms">terms of use</Link> (performance of a contract).
         </li>
         <li>
           <strong>To keep the service secure</strong>: technical logs and the limits on shared documents
-          (legitimate interests, GDPR Art. 6(1)(f)).
+          (legitimate interests).
         </li>
         <li>
-          <strong>To handle reports and answer emails</strong>: acting on reports of illegal content (legal
-          obligation, GDPR Art. 6(1)(c)) and answering other messages (legitimate interests, GDPR Art. 6(1)(f)).
+          <strong>To moderate shared documents</strong>: reviewing reported documents, and others when we need to
+          keep the service safe, and using the fingerprint to find the other documents of someone who keeps sharing
+          illegal content (our legal obligations, or otherwise our legitimate interest in keeping the service
+          lawful).
+        </li>
+        <li>
+          <strong>To answer emails</strong>: dealing with reports, privacy requests and other messages (our legal
+          obligations for privacy requests, and otherwise legitimate interests).
         </li>
       </ul>
       <p>We don’t use your data for profiling, advertising or automated decisions.</p>
@@ -152,37 +166,41 @@ export default function PrivacyPage() {
       <h2>Who processes it for us</h2>
       <ul>
         <li>
-          <strong>Vercel</strong> hosts the website and creates PDFs. It serves pages from a global network and is
-          based in the United States.
+          <strong>Vercel</strong> runs the server that creates PDFs and serves shared documents
+          {serverRegion && <>, in its {serverRegion} region</>}. Pages reach you through Vercel’s global network, so
+          your requests may pass through a server near you on the way.
         </li>
         <li>
-          <strong>Neon</strong>, also based in the United States, stores shared documents in its {databaseRegion}{" "}
-          region.
+          <strong>Neon</strong> stores shared documents in its {databaseRegion} region.
         </li>
         <li>
           <strong>Our email provider</strong> receives and stores the emails you send us.
         </li>
       </ul>
       <p>
-        They process data only on our instructions, under data processing agreements. Where data is transferred
-        outside the European Economic Area, they rely on safeguards such as the EU–US Data Privacy Framework or the
-        EU Standard Contractual Clauses.
+        Vercel and Neon are based in the United States, so their staff may access data from there. Neon processes it
+        only on our instructions, under a data processing agreement that includes the EU Standard Contractual
+        Clauses. Vercel and our email provider handle it under their own terms and privacy policies.
+      </p>
+      <p>
+        Apart from these providers, we give data to authorities only when the law requires it, or when a shared
+        document suggests a threat to someone’s life or safety.
       </p>
 
       <h2>Your rights</h2>
       <p>
         Depending on where you live, you can ask to access, correct or delete your personal data, to restrict or
         object to how we use it, and to receive a copy of it. The quickest way to delete a shared document is
-        “Stop sharing” in the app. For anything else, email {mail}. As there are no accounts, we can only find your
-        shared documents if you send us their links. You can also complain to the data protection authority in your
-        country.
+        “Stop sharing” in the app. For anything else, email {mail}. As there are no accounts, include the link to one
+        of your shared documents: from it, we can find the others shared from the same browser. You can also complain to the data protection authority where we
+        are established, or where you live.
       </p>
 
       <h2>Reporting a shared document</h2>
       <p>
         If a shared document is illegal or infringes your rights, use <strong>Report</strong> on its page or email{" "}
-        {mail} with the link and what is wrong with it. We review every report, reply to tell you what we decided,
-        and remove documents that are illegal or infringe someone’s rights. The{" "}
+        {mail} with the link and what is wrong with it. We review reports and remove documents we find to be illegal or
+        to infringe someone’s rights. The{" "}
         <Link href="/terms">terms of use</Link> explain how reports are handled.
       </p>
 

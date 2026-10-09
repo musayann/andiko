@@ -1,7 +1,7 @@
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
-import { CopyPlusIcon, FlagIcon, LoaderCircleIcon, PencilIcon, ShieldIcon } from "lucide-react"
+import { CopyPlusIcon, FlagIcon, LoaderCircleIcon, PencilIcon, ScrollTextIcon, ShieldIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -92,18 +92,30 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
         <Separator orientation="vertical" className="mx-1 data-vertical:h-5 data-vertical:self-center" />
         <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{title}</h1>
         <ThemeSwitcher className="hidden bg-muted sm:flex" />
-        {/* visitors who only open a shared link see no other page, so the policy is linked here too */}
+        {/* visitors who only open a shared link see no other page, so the policy and terms are linked here too */}
         {privacyPolicy && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
-                <Link href="/privacy" aria-label="Privacy policy">
-                  <ShieldIcon />
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Privacy policy</TooltipContent>
-          </Tooltip>
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
+                  <Link href="/privacy" aria-label="Privacy policy">
+                    <ShieldIcon />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Privacy policy</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
+                  <Link href="/terms" aria-label="Terms of use">
+                    <ScrollTextIcon />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Terms of use</TooltipContent>
+            </Tooltip>
+          </>
         )}
         {reportHref && (
           <Tooltip>

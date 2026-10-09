@@ -15,7 +15,7 @@ A local-first Markdown editor with live preview and PDF export. Built with Next.
   - YAML front matter (`title`, `tags`, `breaks`)
 - **PDF export**: a real download rendered by headless Chrome on the server, with selectable text, embedded fonts and page numbers. Browser printing is available as a fallback.
 - **Local-first**: documents live in the browser (IndexedDB). You can import and download `.md` files. There is no account, and only documents you share are stored on the server.
-- **Sharing**: Share publishes a read-only link at `/s/<title>-<id>`. Only the id identifies the document: links made before a title change, or with a bare id, redirect to the current title. Your later edits sync to it automatically, and only your browser can change or remove it. Visitors can save their own editable copy, which never touches the original.
+- **Sharing**: Share publishes a read-only link at `/s/<title>-<id>`. Only the id identifies the document: links made before a title change, or with a bare id, redirect to the current title. Your later edits sync to it automatically, and only your browser can edit or unpublish it (the instance's operator can still remove it). Visitors can save their own editable copy, which never touches the original.
 - **Folders (optional)**: group documents in nested folders. Move them with the ⋯ menu or by dragging in the sidebar. Documents without a folder stay at the top level, as before.
 
 ## Getting started
@@ -45,6 +45,8 @@ Canonical links, the sitemap, `robots.txt` and Open Graph images use `https://an
 
 Sharing needs a Postgres database. Set `DATABASE_URL` (for example Neon or Supabase on Vercel, or `postgres://postgres:pg@localhost:5432/postgres` after `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=pg postgres`). The `shares` table is created on first use. Without `DATABASE_URL` the Share button is hidden and everything else works as before.
 
+The privacy policy (`/privacy`) and terms (`/terms`) name whoever runs the instance, so they are only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are set; `.env.sample` lists the optional details. The contact email also adds a Report link to shared pages. The policy names Vercel and Neon as providers, so edit `src/app/privacy/page.tsx` if you host elsewhere.
+
 `/` is a static landing page for new visitors and search engines. Once someone has opened a document, a cookie makes `/` redirect them to `/d`, which reopens their last document.
 
 ## PDF export
@@ -71,15 +73,9 @@ The export HTML comes from the client, so the route treats it as untrusted:
 
 ## Sharing
 
-Each browser gets a random owner token the first time the editor opens. It is kept in localStorage and sent as a bearer token. The server stores only its SHA-256 hash next to each published document, and `PUT`/`DELETE /api/shares/<id>` succeed only when the hashes match. Published copies are capped at 1 MB each and 200 per token.
+There are no accounts. The first time the editor opens, the browser gets a random owner token, kept in localStorage. The server stores only its SHA-256 hash next to each shared document, and only requests carrying that token can update or unpublish it. Clearing site data loses the token, so the browser can no longer change its shared documents; they stay online until the operator removes them. Each token can share up to 200 documents of up to 1 MB each.
 
-Local edits to a shared document are pushed a couple of seconds after they are saved. Edits made offline, or while the tab was closing, are pushed on the next visit. The toolbar status of a shared document goes **Unsaved → Saved → Synced**, where Synced means the public copy has caught up. It shows **Not synced** while the server can't be reached, and keeps retrying. Deleting a shared document (or a folder that contains one) unpublishes it first.
-
-Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict nonce-based Content Security Policy (see `src/lib/security/shared-page-policy.ts`, applied by `src/proxy.ts`) and are kept out of search results.
-
-A privacy policy at `/privacy` describes all of this, and terms of use at `/terms` set the rules for shared documents and how reports are handled. Both name whoever runs the instance, so they are only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are all set (see `.env.sample`). Otherwise the pages return 404 and nothing links to them. When a company runs the instance, also set `NEXT_PUBLIC_OPERATOR_ADDRESS` and `NEXT_PUBLIC_OPERATOR_REGISTRATION` so both pages show its registered office and companies register entry. The policy names Vercel and Neon as providers, so check `src/app/privacy/page.tsx` if you host elsewhere. With a contact email set, shared pages also get a Report link that emails it, which hosting laws such as the EU Digital Services Act require of public instances. The terms are adapted from the Codeberg and Basecamp policies, so their text is CC BY-SA 4.0 rather than MIT.
-
-Clearing site data loses the token. The published copies then stay online but can no longer be changed from that browser; share the document again to get a new link.
+Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict Content Security Policy (`src/lib/security/shared-page-policy.ts`) and are kept out of search results.
 
 ## Project layout
 
@@ -118,4 +114,4 @@ public/welcome.md             feature showcase
 
 ## License
 
-Andiko is released under the [MIT License](https://opensource.org/licenses/MIT).
+Andiko is released under the [MIT License](LICENSE), except for the text of the terms of use in `src/app/terms/page.tsx`, which is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

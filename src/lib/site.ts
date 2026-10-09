@@ -5,9 +5,9 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://andiko.app"
 export const siteName = "Andiko"
 export const siteTitle = "Andiko · Free online Markdown editor with live preview and PDF export"
 export const siteDescription =
-  "A free, open-source Markdown editor with live preview, KaTeX maths, Mermaid diagrams, PDF export and share links. No sign-up: documents stay in your browser."
+  "A free, open-source Markdown editor with live preview, KaTeX maths, Mermaid diagrams, PDF export and share links. No sign-up, and your documents are saved in your browser."
 
-export const repoUrl = "https://github.com/musayann/markside"
+export const repoUrl = "https://github.com/musayann/andiko"
 
 /** Set once a document has been opened, so `/` can send returning visitors straight back to it (see src/proxy.ts). */
 export const RESUME_COOKIE = "andiko_resume"
@@ -35,6 +35,12 @@ export const privacyPolicy = (() => {
     operatorAddress: setting(process.env.NEXT_PUBLIC_OPERATOR_ADDRESS),
     operatorRegistration: setting(process.env.NEXT_PUBLIC_OPERATOR_REGISTRATION),
     contactEmail,
+    // the instance's own address, which the terms name; unset when NEXT_PUBLIC_SITE_URL is,
+    // so a fork left on the andiko.app default doesn't claim to run andiko.app
+    instanceUrl: setting(process.env.NEXT_PUBLIC_SITE_URL) && siteUrl,
     databaseRegion,
+    // where the server (Vercel Functions) runs; optional, as the policy can leave it out, but
+    // it only describes the deployment, so keep it in step with the project's region setting
+    serverRegion: setting(process.env.NEXT_PUBLIC_SERVER_REGION),
   }
 })()

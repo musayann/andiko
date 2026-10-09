@@ -46,8 +46,20 @@ const copyText = (text: string) => navigator.clipboard.writeText(text).then(
 
 const POLICY_LINK = "underline underline-offset-2 hover:text-foreground"
 
-export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, flush }: ShareDialogProps) {
+export function ShareDialog({
+  open,
+  onOpenChange,
+  docId,
+  title,
+  shareId: currentShareId,
+  sync,
+  flush,
+}: ShareDialogProps) {
   const [busy, setBusy] = useState<"publish" | "unpublish" | null>(null)
+  // The view follows the document's share while the dialog is open and idle, and holds still
+  // otherwise, so closing after "Stop sharing" doesn't flash the Publish view as it fades out
+  const [shareId, setShareId] = useState(currentShareId)
+  if (open && busy === null && shareId !== currentShareId) setShareId(currentShareId)
   const url = shareId ? shareUrl(shareId, title) : ""
 
   const handlePublish = async () => {
@@ -66,8 +78,10 @@ export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, f
   const handleUnpublish = async () => {
     setBusy("unpublish")
     try {
-      await unpublishDocs([docId])
-      toast.success("Stopped sharing")
+      // false when the link stays online; unpublishDocs has already said why
+      if (await unpublishDocs([docId])) toast.success("Stopped sharing")
+      // either way the document is no longer shared from here, so there's nothing left to show
+      onOpenChange(false)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not unpublish the document.")
     } finally {
@@ -87,8 +101,8 @@ export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, f
           <DialogTitle>Share “{title}”</DialogTitle>
           <DialogDescription>
             {shareId
-              ? "Anyone with the link can read this document. Your edits here update it automatically, and only this browser can change it."
-              : "Publishing uploads this document so anyone with the link can read it. Your edits here keep the public copy up to date, and only this browser can change it. Your other documents stay in this browser."}
+              ? "Anyone with the link can read this document. Your edits here update it automatically, and only this browser can edit it or stop sharing it."
+              : "Publishing uploads this document so anyone with the link can read it. Your edits here keep the public copy up to date, and only this browser can edit it or stop sharing it. Your other documents aren’t published."}
             {privacyPolicy && (
               <>
                 {/* agreement is tied to the Publish click; the privacy policy is a notice, linked from the sidebar */}

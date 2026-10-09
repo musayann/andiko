@@ -1,6 +1,7 @@
 import { toast } from "sonner"
 
 import { clearDocShare, db, markDocSynced, needsSync, setDocShare, type Doc } from "@/lib/db"
+import { contactEmail } from "@/lib/site"
 
 import { MAX_SHARE_BYTES, sharePath, utf8Length } from "./protocol"
 import { getOwnerToken } from "./token"
@@ -69,23 +70,53 @@ export function publishDoc(docId: string): Promise<string> {
 }
 
 /**
- * Removes the public copies of these documents, e.g. before they are deleted.
- * Throws when the server can't be reached, so the caller can keep the documents.
+ * Warns that a public copy stays online because this browser lost the owner key it was
+ * published with (403), so only the operator can remove it now. Called before the link is
+ * forgotten, and stays up until dismissed, as the link is what a removal request needs.
  */
-export function unpublishDocs(docIds: string[]): Promise<void> {
+function warnStillPublic(url: string, title: string, problem: string) {
+  const remedy = contactEmail
+    ? `Email ${contactEmail} with its link to have it removed: ${url}`
+    : `Ask whoever runs this site to remove it: ${url}`
+  toast.warning(title, {
+    description: `${problem} ${remedy}`,
+    duration: Infinity,
+    action: {
+      label: "Copy link",
+      onClick: () =>
+        void navigator.clipboard.writeText(url).then(
+          () => toast.success("Link copied"),
+          () => toast.error("Could not copy to clipboard"),
+        ),
+    },
+  })
+}
+
+/**
+ * Removes the public copies of these documents, e.g. before they are deleted.
+ * Resolves to false when some stay online because this browser lost their owner key
+ * (the user is told how to get them removed). Throws when the server can't be reached,
+ * so the caller can keep the documents.
+ */
+export function unpublishDocs(docIds: string[]): Promise<boolean> {
   return withSyncLock(async () => {
+    let allRemoved = true
     for (const doc of await db.docs.bulkGet(docIds)) {
       if (!doc?.shareId) continue
       const response = await send("DELETE", `/api/shares/${doc.shareId}`)
       if (response.status === 403) {
-        toast.warning(`The public link for “${doc.title}” can’t be removed from this browser`, {
-          description: "It was published with an owner key this browser no longer has.",
-        })
+        allRemoved = false
+        warnStillPublic(
+          shareUrl(doc.shareId, doc.title),
+          `“${doc.title}” is still public`,
+          "This browser no longer has the key to remove it.",
+        )
       } else if (!response.ok && response.status !== 404) {
         throw new Error(await errorMessage(response, "Could not unpublish the document."))
       }
       await clearDocShare(doc.id)
     }
+    return allRemoved
   })
 }
 
@@ -116,13 +147,20 @@ async function push(doc: Doc, shareId: string): Promise<boolean> {
     await markDocSynced(doc.id, shareId, doc.updatedAt)
     return true
   }
-  if (response.status === 403 || response.status === 404) {
+  if (response.status === 403) {
+    warnStillPublic(
+      shareUrl(shareId, doc.title),
+      `Your edits to “${doc.title}” can’t be published`,
+      "Its public link still shows an older version, and this browser no longer has the key to change or remove it.",
+    )
+    await clearDocShare(doc.id)
+    return true
+  }
+  if (response.status === 404) {
+    // removed on the server, e.g. after a report: don't suggest publishing it again
     await clearDocShare(doc.id)
     toast.warning(`“${doc.title}” is no longer published`, {
-      description:
-        response.status === 404
-          ? "Its public link was removed. Share it again to get a new link."
-          : "This browser can no longer update its public link. Share it again to get a new link.",
+      description: "Its public link was removed. Your document is still in this browser.",
     })
     return true
   }

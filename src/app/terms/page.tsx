@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT AND CC-BY-SA-4.0
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -5,7 +6,7 @@ import { notFound } from "next/navigation"
 import { LegalPage, OperatorDetails } from "@/components/legal-page"
 import { MAX_SHARE_BYTES } from "@/lib/share/protocol"
 import { MAX_SHARES_PER_OWNER } from "@/lib/share/store"
-import { privacyPolicy, repoUrl, siteName, siteUrl } from "@/lib/site"
+import { privacyPolicy, repoUrl, siteName } from "@/lib/site"
 
 // Adapted from the Codeberg Terms of Use and the Basecamp Use Restrictions (see the last
 // section), with what the EU Digital Services Act asks of every hosting service added:
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   // published together with the privacy policy, since both have to name who runs this instance
   if (!privacyPolicy) notFound()
-  const { operatorName, operatorAddress, operatorRegistration, contactEmail } = privacyPolicy
+  const { operatorName, operatorAddress, operatorRegistration, contactEmail, instanceUrl } = privacyPolicy
   const mail = <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
 
   return (
@@ -37,18 +38,29 @@ export default function TermsPage() {
       <h2>In short</h2>
       <ul>
         <li>
-          {siteName} is a free Markdown editor. Your documents stay in your browser, and keeping them is up to you.
+          {siteName} is a free Markdown editor. Your documents are saved in your browser, and keeping them is up to you.
         </li>
-        <li>What you share stays yours, and you are responsible for it. Don’t share anything illegal or harmful.</li>
         <li>
-          Anyone can report a shared document. A person reviews every report, and we remove what breaks the rules.
+          You keep your rights in what you share, and you are responsible for it. Don’t share anything illegal or
+          harmful.
+        </li>
+        <li>
+          Anyone can report a shared document. A person reviews reports, and we remove documents we find illegal or
+          against these terms.
         </li>
         <li>The service is free and provided as it is. It may change or stop.</li>
       </ul>
 
       <h2>About these terms</h2>
       <p>
-        {siteName} at <a href={siteUrl}>{siteUrl}</a> is run by {operatorName} (“we”). These terms are an agreement
+        {instanceUrl ? (
+          <>
+            {siteName} at <a href={instanceUrl}>{instanceUrl}</a>
+          </>
+        ) : (
+          <>This instance of {siteName}</>
+        )}{" "}
+        is run by {operatorName} (“we”). These terms are an agreement
         between you and {operatorName}: by using {siteName}, and in particular by sharing a document, you agree to
         them. How we handle personal data is described in the <Link href="/privacy">privacy policy</Link>.
       </p>
@@ -66,9 +78,13 @@ export default function TermsPage() {
 
       <h2>Your documents</h2>
       <p>
-        Your documents are stored only in your browser. We cannot see, back up or recover them: clearing your browser’s
-        data, losing your device or switching browsers can lose them for good. You are responsible for exporting
-        anything you want to keep.
+        Your documents are saved in your browser. We keep no copy of a document unless you share it, and we cannot
+        back up or recover your documents: clearing your browser’s data, losing your device or switching browsers can
+        lose them for good. You are responsible for exporting anything you want to keep.
+      </p>
+      <p>
+        When you export a PDF, your document is sent to our server, and you allow us to process it there only to create
+        the PDF, which we don’t keep.
       </p>
 
       <h2>Sharing a document</h2>
@@ -82,10 +98,11 @@ export default function TermsPage() {
         anyone who gets the link can read it.
       </p>
       <p>
-        You keep all rights to what you share; sharing transfers no ownership to us. You allow us to store, copy and
-        display a shared document, and to turn it into other formats such as PDF, as far as needed to run the service,
-        for as long as it is shared and until it is gone from our backups. You also allow anyone who opens its link to
-        read it and save a copy for their own use.
+        You keep whatever rights you have in what you share; sharing transfers no ownership to us. You give us a free,
+        non-exclusive, worldwide licence to store, copy and display a shared document, including its title in its link
+        and in link previews, as far as needed to run the service. It lasts while the document is shared and until it
+        is gone from our backups, and longer only where the law requires us to keep it. You also allow anyone who opens
+        its link to read it and save a copy for their own use.
       </p>
 
       <h2>What is not allowed</h2>
@@ -131,20 +148,21 @@ export default function TermsPage() {
         <li>a statement that you believe in good faith that your report is accurate and complete.</li>
       </ul>
       <p>
-        We will confirm that we received your report, and tell you what we decided and why. We do not tell the person
+        We aim to confirm that we received your report, and to tell you what we decided and why. We do not tell the person
         who shared the document who reported it, unless the law requires us to.
       </p>
 
       <h2>How we moderate</h2>
       <p>
-        We don’t monitor shared documents and don’t use automated tools to moderate them. A person reviews every report,
-        and we may also look at a shared document when we need to keep the service safe.
+        We don’t monitor shared documents and don’t use automated tools to moderate them. A person reviews reports, and
+        we may also look at a shared document when we need to keep the service safe.
       </p>
       <p>
-        When a shared document is illegal or breaks these terms, we remove it and its link stops working. There are no
-        accounts, so we have no way to tell the person who shared it. If someone keeps sharing such documents, we may
-        also remove the other documents shared from the same browser. If a document suggests a crime that threatens
-        someone’s life or safety, we will inform the authorities, as the law requires.
+        When we find that a shared document is illegal or breaks these terms, we remove it and its link stops working.
+        There are no accounts, so we can’t contact the person who shared it to explain why. If someone keeps sharing
+        such documents, we may also remove the other documents shared from the same browser. If a document suggests a
+        crime that threatens someone’s life or safety, we may inform the authorities, and will where the law requires
+        it.
       </p>
 
       <h2>If you disagree with a decision</h2>
@@ -157,8 +175,7 @@ export default function TermsPage() {
       <h2>Contact</h2>
       <p>
         For anything about these terms, including reports and messages from authorities, email {mail}. This is our
-        single point of contact under the EU Digital Services Act, for users and authorities alike. You can write to us
-        in {CONTACT_LANGUAGES}.
+        contact point for users and authorities alike. You can write to us in {CONTACT_LANGUAGES}.
       </p>
 
       <h2>Availability and changes to the service</h2>
@@ -170,15 +187,16 @@ export default function TermsPage() {
 
       <h2>Liability</h2>
       <p>
-        {siteName} is provided free of charge and “as is”, without any warranty, for example that it is free of errors,
-        fit for a particular purpose, or that documents, links and PDFs will be accurate, available or kept. We are not
-        responsible for other websites that documents link to or load images from.
+        {siteName} is provided free of charge and, as far as the law allows, “as is”, without any warranty: for example,
+        that it is free of errors, fit for a particular purpose, or that documents, links and PDFs will be accurate,
+        available or kept. We are not responsible for other websites that documents link to or load images from.
       </p>
       <p>
-        As far as the law allows, we are not liable for any loss or damage from using or being unable to use {siteName},
-        including lost data. Nothing in these terms limits liability that the law does not allow to be limited, such as
-        for damage caused intentionally or through gross negligence, or for injury to life, body or health. Nor do they
-        affect your rights as a consumer under the law of the country you live in.
+        As far as the law allows, we are not liable for loss or damage from using or being unable to use {siteName},
+        including lost data, unless we caused it intentionally or through gross negligence. Nothing in these terms
+        limits our liability for fraud, for death or personal injury caused by our negligence, or for anything else the
+        law doesn’t allow us to limit, and nothing in them affects your rights as a consumer under the law of the
+        country where you live.
       </p>
 
       <h2>Changes to these terms</h2>

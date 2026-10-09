@@ -55,7 +55,7 @@ const features = [
   {
     icon: Share2Icon,
     title: "Share a read-only link",
-    text: "Publish a document with one click. Your edits keep the link up to date, and readers can save a copy to edit.",
+    text: "Publish a document with one click. A copy is stored in a database on our server and follows your edits until you stop sharing.",
   },
   {
     icon: MessageSquareWarningIcon,
@@ -69,8 +69,8 @@ const features = [
   },
   {
     icon: ShieldCheckIcon,
-    title: "Private by design",
-    text: "No account and no cloud storage. Your documents are saved in your own browser, and only the ones you share are uploaded.",
+    title: "Private by default",
+    text: "No account needed. Your documents are saved in your own browser. Only the ones you choose to share are stored on our server, and PDF export sends a document there only to create the PDF.",
   },
   {
     icon: FolderTreeIcon,
@@ -92,12 +92,12 @@ const faqs = [
   {
     question: "Where are my documents stored?",
     answer:
-      "In your browser, using IndexedDB. They are not uploaded unless you share one: a shared document is stored on the server so anyone with its link can read it, until you stop sharing. PDF export also sends the rendered document to the server to create the PDF, and it is not kept. Clearing your browser data deletes your documents, so export anything you want to keep.",
+      "Documents you don’t share are stored only in your browser, using IndexedDB, and stay private to you. When you share a document, a copy is stored in a database on our server so anyone with the link can read it, and it is removed when you stop sharing. PDF export also sends the rendered document to the server to create the PDF, and it is not kept. Clearing your browser data deletes the documents in your browser, so export anything you want to keep.",
   },
   {
     question: "Can I share a document?",
     answer:
-      "Yes. Choose Share in the toolbar to publish a read-only link. Your edits keep it up to date, only your browser can change it, and people who open it can save their own copy to edit.",
+      "Yes. Choose Share in the toolbar to publish a read-only link. This stores a copy of the document in a database on our server until you stop sharing it or we remove it. Your edits keep it up to date, only your browser can edit it or stop sharing it, and people who open it can save their own copy to edit. Documents you don’t share are never published.",
   },
   {
     question: "How do I convert Markdown to PDF?",
@@ -188,8 +188,8 @@ export default function LandingPage() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-pretty text-muted-foreground">
             Write Markdown on one side and read it on the other, with KaTeX maths, Mermaid diagrams and alert boxes.
-            Export a print-ready PDF in one click, or share a read-only link. Everything you don’t share stays in your
-            browser.
+            Export a print-ready PDF or share a read-only link. Your documents are saved in your browser, and only the
+            ones you share are stored on our server.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild className="px-4">
