@@ -294,9 +294,14 @@ export default function LandingPage() {
           </span>
           <span className="flex items-center gap-4">
             {privacyPolicy && (
-              <Link href="/privacy" className="hover:text-foreground">
-                Privacy
-              </Link>
+              <>
+                <Link href="/privacy" className="hover:text-foreground">
+                  Privacy
+                </Link>
+                <Link href="/terms" className="hover:text-foreground">
+                  Terms
+                </Link>
+              </>
             )}
             <a href={repoUrl} className="hover:text-foreground">
               Source on GitHub

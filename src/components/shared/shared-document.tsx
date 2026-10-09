@@ -71,11 +71,15 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
     }
   }
 
-  // shared documents can contain anything, so anyone can report one to the instance's contact address
+  // Shared documents can contain anything, so anyone can report one to the instance's contact address.
+  // The body asks for what a notice must contain under the DSA (Art. 16), as listed in /terms.
   const reportHref =
     contactEmail &&
     `mailto:${contactEmail}?subject=${encodeURIComponent(`Report: ${title}`)}&body=${encodeURIComponent(
-      `Shared document: ${siteUrl}${sharePath(id, title)}\n\nWhat is wrong with it:\n`,
+      `Shared document: ${siteUrl}${sharePath(id, title)}\n\n` +
+        "What is wrong with it and, if you think it is illegal, why:\n\n\n" +
+        "Your name (optional for reports of child sexual abuse material):\n\n" +
+        "I believe in good faith that this report is accurate and complete.\n",
     )}`
 
   return (

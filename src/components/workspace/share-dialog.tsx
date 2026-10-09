@@ -44,6 +44,8 @@ const copyText = (text: string) => navigator.clipboard.writeText(text).then(
   () => false,
 )
 
+const POLICY_LINK = "underline underline-offset-2 hover:text-foreground"
+
 export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, flush }: ShareDialogProps) {
   const [busy, setBusy] = useState<"publish" | "unpublish" | null>(null)
   const url = shareId ? shareUrl(shareId, title) : ""
@@ -89,15 +91,12 @@ export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, f
               : "Publishing uploads this document so anyone with the link can read it. Your edits here keep the public copy up to date, and only this browser can change it. Your other documents stay in this browser."}
             {privacyPolicy && (
               <>
-                {" "}
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  rel="noopener"
-                  className="underline underline-offset-2 hover:text-foreground"
-                >
-                  Privacy policy
+                {/* agreement is tied to the Publish click; the privacy policy is a notice, linked from the sidebar */}
+                {shareId ? " By sharing, you agreed to the " : " By publishing, you agree to the "}
+                <a href="/terms" target="_blank" rel="noopener" className={POLICY_LINK}>
+                  terms of use
                 </a>
+                .
               </>
             )}
           </DialogDescription>

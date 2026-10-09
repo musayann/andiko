@@ -77,7 +77,7 @@ Local edits to a shared document are pushed a couple of seconds after they are s
 
 Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict nonce-based Content Security Policy (see `src/lib/security/shared-page-policy.ts`, applied by `src/proxy.ts`) and are kept out of search results.
 
-A privacy policy at `/privacy` describes all of this. It names whoever runs the instance, so it is only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are all set (see `.env.sample`). Otherwise the page returns 404 and nothing links to it. The policy names Vercel and Neon as providers, so check `src/app/privacy/page.tsx` if you host elsewhere. With a contact email set, shared pages also get a Report link that emails it, which hosting laws such as the EU Digital Services Act require of public instances.
+A privacy policy at `/privacy` describes all of this, and terms of use at `/terms` set the rules for shared documents and how reports are handled. Both name whoever runs the instance, so they are only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are all set (see `.env.sample`). Otherwise the pages return 404 and nothing links to them. When a company runs the instance, also set `NEXT_PUBLIC_OPERATOR_ADDRESS` and `NEXT_PUBLIC_OPERATOR_REGISTRATION` so both pages show its registered office and companies register entry. The policy names Vercel and Neon as providers, so check `src/app/privacy/page.tsx` if you host elsewhere. With a contact email set, shared pages also get a Report link that emails it, which hosting laws such as the EU Digital Services Act require of public instances. The terms are adapted from the Codeberg and Basecamp policies, so their text is CC BY-SA 4.0 rather than MIT.
 
 Clearing site data loses the token. The published copies then stay online but can no longer be changed from that browser; share the document again to get a new link.
 
@@ -91,6 +91,7 @@ src/
     d/[id]/page.tsx           editor workspace
     s/[slug]/page.tsx         read-only view of a shared document
     privacy/page.tsx          privacy policy
+    terms/page.tsx            terms of use
     api/export/pdf/route.ts   PDF rendering endpoint
     api/shares/               publish, update and unpublish shared documents
   components/
