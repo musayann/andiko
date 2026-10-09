@@ -7,6 +7,8 @@ import { EditorView } from "@codemirror/view"
 import { tags as t } from "@lezer/highlight"
 import CodeMirror from "@uiw/react-codemirror"
 
+import { formatKeymap } from "@/lib/formatting"
+
 // The editor is always dark, even though the rest of the app is light
 const editorTheme = EditorView.theme(
   {
@@ -69,6 +71,7 @@ const extensions = [
   EditorView.lineWrapping,
   syntaxHighlighting(highlightStyle),
   editorTheme,
+  formatKeymap,
 ]
 
 interface EditorPaneProps {

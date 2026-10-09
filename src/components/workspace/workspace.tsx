@@ -19,6 +19,7 @@ import { getDocTitle } from "@/lib/title"
 import { cn } from "@/lib/utils"
 
 import { ExportPdfDialog } from "./export-pdf-dialog"
+import { FormatBar } from "./format-bar"
 import { PreviewPane } from "./preview-pane"
 import { Toolbar } from "./toolbar"
 import {
@@ -200,8 +201,11 @@ function Editor({ initialContent, content, setContent, saveState, flush }: Edito
         className="min-h-0 flex-1"
       >
         <ResizablePanel id="editor" collapsible collapsedSize={0} minSize="20%">
-          <div className="h-full" inert={effectiveMode === "view"}>
-            <EditorPane initialValue={initialContent} onChange={setContent} onReady={setView} />
+          <div className="flex h-full flex-col" inert={effectiveMode === "view"}>
+            <FormatBar view={view} />
+            <div className="min-h-0 flex-1">
+              <EditorPane initialValue={initialContent} onChange={setContent} onReady={setView} />
+            </div>
           </div>
         </ResizablePanel>
         <ResizableHandle

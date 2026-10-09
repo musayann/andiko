@@ -5,6 +5,7 @@
 A local-first Markdown editor with live preview and PDF export. Built with Next.js, shadcn/ui, CodeMirror and markdown-it.
 
 - **Edit / Split / View**: write on one side and read on the other, or hide either side (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd> / <kbd>B</kbd> / <kbd>V</kbd>). Drag the divider to resize. The panes stay scroll-synced.
+- **Formatting bar**: buttons above the editor for headings, bold, italic, strikethrough, highlight, inline code, sub/superscript, quotes, lists, task lists, links, images, tables (pick a size from a grid), code blocks and dividers. An Insert menu adds alert boxes, spoilers, math blocks and Mermaid diagrams. Shortcuts: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd> bold, <kbd>I</kbd> italic, <kbd>Shift</kbd>+<kbd>X</kbd> strikethrough, <kbd>E</kbd> inline code, <kbd>K</kbd> link.
 - **Extended Markdown**:
   - alert boxes (`:::info`, `:::success`, `:::warning`, `:::danger`) and `:::spoiler`
   - `[TOC]`, KaTeX math (`$…$`, `$$…$$`) and Mermaid diagrams
@@ -68,11 +69,12 @@ src/
   components/
     app-sidebar.tsx           document list, import, duplicate, download, delete
     sidebar/                  folder tree rows, Move to menu, folder dialogs, drag and drop
-    workspace/                toolbar, CodeMirror editor, preview, TOC, export dialog
+    workspace/                toolbar, formatting bar, CodeMirror editor, preview, TOC, export dialog
   hooks/                      autosave (use-doc), scroll sync
   lib/
     markdown/                 markdown-it setup and syntax plugins (fence, containers, TOC, source map)
     preview-dom.ts            DOM diffing (morphdom), Mermaid, copy buttons, static export HTML
+    formatting.ts             editor commands behind the formatting bar and its shortcuts
     scroll-sync.ts            editor line ↔ preview offset mapping
     db.ts                     Dexie (IndexedDB) storage
     folders.ts                folder tree helpers (nesting, cycle checks, paths)
