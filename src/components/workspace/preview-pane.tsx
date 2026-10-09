@@ -17,7 +17,8 @@ interface PreviewPaneProps {
   content: string
   showToc: boolean
   scrollRef: RefObject<HTMLDivElement | null>
-  onToggleTask: (line: number) => void
+  /** Absent for a read-only document: task checkboxes then ignore clicks. */
+  onToggleTask?: (line: number) => void
   onRendered?: () => void
 }
 
@@ -43,6 +44,10 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
     const target = event.target as HTMLElement
 
     if (target instanceof HTMLInputElement && target.classList.contains("task-list-item-checkbox")) {
+      if (!onToggleTask) {
+        event.preventDefault()
+        return
+      }
       const item = target.closest<HTMLElement>("li[data-source-line]")
       if (item) onToggleTask(Number(item.dataset.sourceLine))
       return

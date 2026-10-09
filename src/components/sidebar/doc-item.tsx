@@ -1,6 +1,6 @@
 "use client"
 
-import { CopyIcon, FileDownIcon, FileTextIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import { CopyIcon, FileDownIcon, FileTextIcon, GlobeIcon, LinkIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
 
 import {
@@ -49,7 +49,12 @@ export function DocItem({ doc, path }: { doc: DocSummary; path?: string }) {
         <Link href={`/d/${doc.id}`}>
           <FileTextIcon className="mt-0.5 self-start text-muted-foreground group-data-active/menu-button:text-foreground" />
           <span className="flex min-w-0 flex-col">
-            <span className="truncate">{doc.title}</span>
+            <span className="flex items-center gap-1.5">
+              <span className="truncate">{doc.title}</span>
+              {doc.shareId && (
+                <GlobeIcon role="img" aria-label="Published" className="size-3 shrink-0 text-muted-foreground" />
+              )}
+            </span>
             <span className="truncate text-xs text-muted-foreground">
               {path && `${path} · `}
               {formatUpdated(doc.updatedAt)}
@@ -72,6 +77,12 @@ export function DocItem({ doc, path }: { doc: DocSummary; path?: string }) {
             <FileDownIcon />
             Download .md
           </DropdownMenuItem>
+          {doc.shareId && (
+            <DropdownMenuItem onSelect={() => tree.onCopyDocLink(doc)}>
+              <LinkIcon />
+              Copy public link
+            </DropdownMenuItem>
+          )}
           <MoveToMenu item={{ kind: "doc", id: doc.id, parentId: doc.folderId }} />
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => tree.onDeleteDoc(doc)}>

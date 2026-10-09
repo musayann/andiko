@@ -1,6 +1,6 @@
 import type { Doc, Folder } from "./db"
 
-export type DocSummary = Pick<Doc, "id" | "title" | "updatedAt" | "folderId">
+export type DocSummary = Pick<Doc, "id" | "title" | "updatedAt" | "folderId" | "shareId">
 
 export interface FolderNode<D> {
   folder: Folder
@@ -60,6 +60,11 @@ export function buildTree<D extends Pick<Doc, "folderId">>(folders: readonly Fol
 /** Number of documents in a folder, including its subfolders. */
 export function countDocs(node: FolderNode<unknown>): number {
   return node.children.reduce((sum, child) => sum + countDocs(child), node.docs.length)
+}
+
+/** Every document in a folder, including its subfolders. */
+export function collectDocs<D>(node: FolderNode<D>): D[] {
+  return [...node.docs, ...node.children.flatMap((child) => collectDocs(child))]
 }
 
 /** Ids of every folder nested (at any depth) inside `id`. */

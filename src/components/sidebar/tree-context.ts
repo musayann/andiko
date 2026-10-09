@@ -31,6 +31,7 @@ export interface SidebarTree {
   onNewDoc: (folderId?: string) => void
   onDuplicateDoc: (doc: DocSummary) => void
   onDownloadDoc: (doc: DocSummary) => void
+  onCopyDocLink: (doc: DocSummary) => void
   onDeleteDoc: (doc: DocSummary) => void
   /** Opens the name dialog; `moveInto` is moved into the folder once it exists. */
   onNewFolder: (parentId?: string, moveInto?: TreeItem) => void

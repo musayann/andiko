@@ -7,9 +7,11 @@ import {
   DownloadIcon,
   FileDownIcon,
   FileTextIcon,
+  GlobeIcon,
   MoveVerticalIcon,
   PencilIcon,
   PrinterIcon,
+  Share2Icon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -48,6 +50,10 @@ interface ToolbarProps {
   allowSplit: boolean
   scrollSync: boolean
   onScrollSyncChange: (enabled: boolean) => void
+  /** Whether the document has a public link. */
+  shared: boolean
+  /** Opens the share dialog; absent when the server can't publish. */
+  onShare?: () => void
   onExportPdf: () => void
   onPrint: () => void
   onDownloadMarkdown: () => void
@@ -61,6 +67,8 @@ export function Toolbar({
   allowSplit,
   scrollSync,
   onScrollSyncChange,
+  shared,
+  onShare,
   onExportPdf,
   onPrint,
   onDownloadMarkdown,
@@ -127,6 +135,13 @@ export function Toolbar({
           </TooltipTrigger>
           <TooltipContent>{scrollSync ? "Scroll sync on" : "Scroll sync off"}</TooltipContent>
         </Tooltip>
+      )}
+
+      {onShare && (
+        <Button variant="outline" size="sm" onClick={onShare} aria-label={shared ? "Shared" : "Share"}>
+          {shared ? <GlobeIcon className="text-primary" /> : <Share2Icon />}
+          <span className="hidden sm:inline">{shared ? "Shared" : "Share"}</span>
+        </Button>
       )}
 
       <DropdownMenu>

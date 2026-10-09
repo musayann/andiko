@@ -65,7 +65,7 @@ const features = [
   {
     icon: ShieldCheckIcon,
     title: "Private by design",
-    text: "No account and no cloud storage. Your documents are saved in your own browser.",
+    text: "No account and no cloud storage. Your documents are saved in your own browser, and only the ones you share are uploaded.",
   },
   {
     icon: FolderTreeIcon,
@@ -92,7 +92,12 @@ const faqs = [
   {
     question: "Where are my documents stored?",
     answer:
-      "In your browser, using IndexedDB. They are not uploaded anywhere. The only exception is PDF export: the rendered document is sent to the server to create the PDF and is not kept. Clearing your browser data deletes your documents, so export anything you want to keep.",
+      "In your browser, using IndexedDB. They are not uploaded unless you share one: a shared document is stored on the server so anyone with its link can read it, until you stop sharing. PDF export also sends the rendered document to the server to create the PDF, and it is not kept. Clearing your browser data deletes your documents, so export anything you want to keep.",
+  },
+  {
+    question: "Can I share a document?",
+    answer:
+      "Yes. Choose Share in the toolbar to publish a read-only link. Your edits keep it up to date, only your browser can change it, and people who open it can save their own copy to edit.",
   },
   {
     question: "How do I convert Markdown to PDF?",
@@ -183,7 +188,7 @@ export default function LandingPage() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-pretty text-muted-foreground">
             Write Markdown on one side and read it on the other, with KaTeX maths, Mermaid diagrams and alert boxes.
-            Export a print-ready PDF in one click. Your documents never leave your browser.
+            Export a print-ready PDF in one click. Your documents stay in your browser unless you share them.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild className="px-4">
