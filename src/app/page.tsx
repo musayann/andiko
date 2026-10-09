@@ -8,7 +8,7 @@ import {
   FolderTreeIcon,
   KeyboardIcon,
   MessageSquareWarningIcon,
-  MoonStarIcon,
+  Share2Icon,
   ShieldCheckIcon,
   SigmaIcon,
   WorkflowIcon,
@@ -53,6 +53,11 @@ const features = [
     text: "A real PDF rendered by headless Chrome, with selectable text, embedded fonts and page numbers.",
   },
   {
+    icon: Share2Icon,
+    title: "Share a read-only link",
+    text: "Publish a document with one click. Your edits keep the link up to date, and readers can save a copy to edit.",
+  },
+  {
     icon: MessageSquareWarningIcon,
     title: "Extended Markdown",
     text: "Alert boxes, spoilers, footnotes, task lists, a table of contents, definition lists, emoji and YAML front matter.",
@@ -71,11 +76,6 @@ const features = [
     icon: FolderTreeIcon,
     title: "Folders, import and export",
     text: "Organise documents in nested folders. Import .md files or .zip archives and export everything back.",
-  },
-  {
-    icon: MoonStarIcon,
-    title: "Light and dark themes",
-    text: "Follows your system setting, or pick one. Code blocks get syntax highlighting in both.",
   },
 ]
 
@@ -188,7 +188,8 @@ export default function LandingPage() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-pretty text-muted-foreground">
             Write Markdown on one side and read it on the other, with KaTeX maths, Mermaid diagrams and alert boxes.
-            Export a print-ready PDF in one click. Your documents stay in your browser unless you share them.
+            Export a print-ready PDF in one click, or share a read-only link. Everything you don’t share stays in your
+            browser.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild className="px-4">

@@ -5,7 +5,7 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://andiko.app"
 export const siteName = "Andiko"
 export const siteTitle = "Andiko · Free online Markdown editor with live preview and PDF export"
 export const siteDescription =
-  "A free, open-source Markdown editor with live preview, KaTeX maths, Mermaid diagrams and PDF export. No sign-up: your documents stay in your browser."
+  "A free, open-source Markdown editor with live preview, KaTeX maths, Mermaid diagrams, PDF export and share links. No sign-up: documents stay in your browser."
 
 export const repoUrl = "https://github.com/musayann/markside"
 
