@@ -17,7 +17,7 @@ import {
 import { LogoMark } from "@/components/logo"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { Button } from "@/components/ui/button"
-import { repoUrl, siteDescription, siteName, siteUrl } from "@/lib/site"
+import { privacyPolicy, repoUrl, siteDescription, siteName, siteUrl } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 // Returning visitors never see this page: src/proxy.ts sends them back to their last document.
@@ -292,9 +292,16 @@ export default function LandingPage() {
             <LogoMark className="size-5" />
             {siteName} is open source under the MIT License.
           </span>
-          <a href={repoUrl} className="hover:text-foreground">
-            Source on GitHub
-          </a>
+          <span className="flex items-center gap-4">
+            {privacyPolicy && (
+              <Link href="/privacy" className="hover:text-foreground">
+                Privacy
+              </Link>
+            )}
+            <a href={repoUrl} className="hover:text-foreground">
+              Source on GitHub
+            </a>
+          </span>
         </div>
       </footer>
     </div>
