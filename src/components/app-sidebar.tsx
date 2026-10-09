@@ -335,20 +335,6 @@ export function AppSidebar() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Export all as .zip"
-                  onClick={() => void handleExportAll()}
-                  className={HEADER_BUTTON}
-                >
-                  <DownloadIcon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Export all as .zip</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
                   aria-label="New folder"
                   onClick={() => setNameDialog({ mode: "create" })}
                   className={HEADER_BUTTON}
@@ -440,10 +426,20 @@ export function AppSidebar() {
           <span className="text-xs text-muted-foreground">Theme</span>
           <ThemeSwitcher />
         </div>
-        <p className="flex items-center gap-2 px-2 pb-1 text-xs text-muted-foreground">
-          <HardDriveIcon className="size-3.5" />
-          Documents are stored in this browser
-        </p>
+        <div className="flex flex-col items-start gap-1.5 px-2 pb-1 text-xs text-muted-foreground">
+          <p className="flex gap-2">
+            <HardDriveIcon className="mt-px size-3.5 shrink-0" />
+            Documents are stored in this browser
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleExportAll()}
+            className="flex items-center gap-2 rounded-sm font-medium underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          >
+            <DownloadIcon className="size-3.5 shrink-0" />
+            Export all as .zip
+          </button>
+        </div>
       </SidebarFooter>
       <SidebarRail />
 
