@@ -75,7 +75,7 @@ Each browser gets a random owner token the first time the editor opens. It is ke
 
 Local edits to a shared document are pushed a couple of seconds after they are saved. Edits made offline, or while the tab was closing, are pushed on the next visit. Deleting a shared document (or a folder that contains one) unpublishes it first.
 
-Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict nonce-based Content Security Policy (see `src/proxy.ts`) and are kept out of search results.
+Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict nonce-based Content Security Policy (see `src/lib/security/shared-page-policy.ts`, applied by `src/proxy.ts`) and are kept out of search results.
 
 Clearing site data loses the token. The published copies then stay online but can no longer be changed from that browser; share the document again to get a new link.
 
@@ -106,8 +106,9 @@ src/
     folders.ts                folder tree helpers (nesting, cycle checks, paths)
     pdf/                      Chrome launcher, HTML template, URL guard
     share/                    owner token, sync client, Postgres store, request parsing
+    security/                 Content Security Policy for shared pages
   styles/document.css         document look (preview, print, PDF)
-  proxy.ts                    sends returning visitors from / to their last document; CSP for shared pages
+  proxy.ts                    sends returning visitors from / to their last document; secures shared pages
 public/welcome.md             feature showcase
 ```
 
