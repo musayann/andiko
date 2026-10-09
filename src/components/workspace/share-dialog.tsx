@@ -15,8 +15,15 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { ShareSyncState } from "@/hooks/use-share-status"
 import { publishDoc, shareUrl, unpublishDocs } from "@/lib/share/client"
 import { cn } from "@/lib/utils"
+
+const SYNC_STATES: Record<ShareSyncState, { description: string; dot: string }> = {
+  synced: { description: "The public copy is up to date.", dot: "bg-success" },
+  syncing: { description: "Updating the public copy…", dot: "bg-warning animate-pulse" },
+  failing: { description: "Couldn’t reach the server. Your edits will sync once it’s back.", dot: "bg-destructive" },
+}
 
 interface ShareDialogProps {
   open: boolean
@@ -25,8 +32,8 @@ interface ShareDialogProps {
   title: string
   /** Set while the document is published. */
   shareId?: string
-  /** Edits the public copy doesn't have yet. */
-  pending: boolean
+  /** Sync state of the public copy, while published. */
+  sync: ShareSyncState
   /** Saves pending edits, so the first upload has them. */
   flush: () => Promise<void>
 }
@@ -36,7 +43,7 @@ const copyText = (text: string) => navigator.clipboard.writeText(text).then(
   () => false,
 )
 
-export function ShareDialog({ open, onOpenChange, docId, title, shareId, pending, flush }: ShareDialogProps) {
+export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, flush }: ShareDialogProps) {
   const [busy, setBusy] = useState<"publish" | "unpublish" | null>(null)
   const url = shareId ? shareUrl(shareId) : ""
 
@@ -97,8 +104,8 @@ export function ShareDialog({ open, onOpenChange, docId, title, shareId, pending
               </Button>
             </div>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
-              <span className={cn("size-1.5 rounded-full", pending ? "bg-warning" : "bg-success")} />
-              {pending ? "Changes waiting to sync" : "Public copy is up to date"}
+              <span className={cn("size-1.5 shrink-0 rounded-full", SYNC_STATES[sync].dot)} />
+              {SYNC_STATES[sync].description}
             </p>
           </div>
         )}

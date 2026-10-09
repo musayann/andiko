@@ -36,15 +36,28 @@ const MODES: { value: ViewMode; label: string; shortcut: string; icon: typeof Pe
   { value: "view", label: "View", shortcut: "Ctrl+Alt+V", icon: BookOpenIcon },
 ]
 
-const SAVE_STATES: Record<SaveState, { label: string; dot: string }> = {
-  saved: { label: "Saved", dot: "bg-success" },
-  saving: { label: "Saving…", dot: "bg-warning animate-pulse" },
-  unsaved: { label: "Unsaved", dot: "bg-warning" },
+/**
+ * Where the latest edits are: Unsaved → Saved in this browser, then, for
+ * a published document, Synced once its public copy has them too.
+ */
+export type DocStatus = SaveState | "synced" | "not-synced"
+
+// `color` tints the dot, or the globe for the states about the public copy
+const STATUSES: Record<DocStatus, { label: string; color: string; globe?: boolean; hint?: string }> = {
+  unsaved: { label: "Unsaved", color: "text-warning" },
+  saved: { label: "Saved", color: "text-success" },
+  synced: { label: "Synced", color: "text-success", globe: true, hint: "Saved, and the public copy is up to date" },
+  "not-synced": {
+    label: "Not synced",
+    color: "text-destructive",
+    globe: true,
+    hint: "Saved in this browser, but the server couldn’t be reached. Your edits will sync once it’s back.",
+  },
 }
 
 interface ToolbarProps {
   title: string
-  saveState: SaveState
+  status: DocStatus
   mode: ViewMode
   onModeChange: (mode: ViewMode) => void
   allowSplit: boolean
@@ -61,7 +74,7 @@ interface ToolbarProps {
 
 export function Toolbar({
   title,
-  saveState,
+  status,
   mode,
   onModeChange,
   allowSplit,
@@ -73,6 +86,13 @@ export function Toolbar({
   onPrint,
   onDownloadMarkdown,
 }: ToolbarProps) {
+  const { label, color, globe, hint } = STATUSES[status]
+  const statusLabel = (
+    <span className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex" aria-live="polite">
+      {globe ? <GlobeIcon className={cn("size-3", color)} /> : <span className={cn("size-1.5 rounded-full bg-current", color)} />}
+      {label}
+    </span>
+  )
   const modes = allowSplit ? MODES : MODES.filter((item) => item.value !== "split")
 
   return (
@@ -81,13 +101,14 @@ export function Toolbar({
       <Separator orientation="vertical" className="mx-1 data-vertical:h-5 data-vertical:self-center" />
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <h1 className="truncate text-sm font-medium tracking-tight">{title}</h1>
-        <span
-          className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex"
-          aria-live="polite"
-        >
-          <span className={cn("size-1.5 rounded-full", SAVE_STATES[saveState].dot)} />
-          {SAVE_STATES[saveState].label}
-        </span>
+        {hint ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{statusLabel}</TooltipTrigger>
+            <TooltipContent>{hint}</TooltipContent>
+          </Tooltip>
+        ) : (
+          statusLabel
+        )}
       </div>
 
       {/* segmented control: the active mode is a raised tab on a grey track. Styled via

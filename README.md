@@ -73,7 +73,7 @@ The export HTML comes from the client, so the route treats it as untrusted:
 
 Each browser gets a random owner token the first time the editor opens. It is kept in localStorage and sent as a bearer token. The server stores only its SHA-256 hash next to each published document, and `PUT`/`DELETE /api/shares/<id>` succeed only when the hashes match. Published copies are capped at 1 MB each and 200 per token.
 
-Local edits to a shared document are pushed a couple of seconds after they are saved. Edits made offline, or while the tab was closing, are pushed on the next visit. Deleting a shared document (or a folder that contains one) unpublishes it first.
+Local edits to a shared document are pushed a couple of seconds after they are saved. Edits made offline, or while the tab was closing, are pushed on the next visit. The toolbar status of a shared document goes **Unsaved → Saved → Synced**, where Synced means the public copy has caught up. It shows **Not synced** while the server can't be reached, and keeps retrying. Deleting a shared document (or a folder that contains one) unpublishes it first.
 
 Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict nonce-based Content Security Policy (see `src/lib/security/shared-page-policy.ts`, applied by `src/proxy.ts`) and are kept out of search results.
 
