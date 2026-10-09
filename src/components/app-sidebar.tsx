@@ -1,7 +1,15 @@
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
-import { DownloadIcon, FilePlusIcon, FolderPlusIcon, HardDriveIcon, SearchIcon, UploadIcon } from "lucide-react"
+import {
+  DownloadIcon,
+  FilePlusIcon,
+  FolderPlusIcon,
+  HardDriveIcon,
+  SearchIcon,
+  ShieldCheckIcon,
+  UploadIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
@@ -75,9 +83,12 @@ import {
   type FolderNode,
 } from "@/lib/folders"
 import { shareUrl, unpublishDocs } from "@/lib/share/client"
+import { privacyPolicy } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 const HEADER_BUTTON = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+const FOOTER_LINK =
+  "flex items-center gap-2 rounded-sm font-medium underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-sidebar-ring"
 
 const isZip = (file: File) => /\.zip$/i.test(file.name)
 
@@ -231,7 +242,7 @@ export function AppSidebar() {
   const handleCopyLink = async (doc: DocSummary) => {
     if (!doc.shareId) return
     try {
-      await navigator.clipboard.writeText(shareUrl(doc.shareId))
+      await navigator.clipboard.writeText(shareUrl(doc.shareId, doc.title))
       toast.success("Link copied")
     } catch {
       toast.error("Could not copy to clipboard")
@@ -468,11 +479,17 @@ export function AppSidebar() {
           <button
             type="button"
             onClick={() => void handleExportAll()}
-            className="flex items-center gap-2 rounded-sm font-medium underline-offset-2 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+            className={FOOTER_LINK}
           >
             <DownloadIcon className="size-3.5 shrink-0" />
             Export all as .zip
           </button>
+          {privacyPolicy && (
+            <Link href="/privacy" className={FOOTER_LINK}>
+              <ShieldCheckIcon className="size-3.5 shrink-0" />
+              Privacy policy
+            </Link>
+          )}
         </div>
       </SidebarFooter>
       <SidebarRail />

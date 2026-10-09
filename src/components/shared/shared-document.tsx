@@ -1,7 +1,7 @@
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
-import { CopyPlusIcon, LoaderCircleIcon, PencilIcon } from "lucide-react"
+import { CopyPlusIcon, FlagIcon, LoaderCircleIcon, PencilIcon, ShieldIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { createDoc, db } from "@/lib/db"
+import { sharePath } from "@/lib/share/protocol"
+import { contactEmail, privacyPolicy, siteUrl } from "@/lib/site"
 
 // the preview sanitizes with DOMPurify, which needs the browser's DOM
 const PreviewPane = dynamic(() => import("@/components/workspace/preview-pane").then((mod) => mod.PreviewPane), {
@@ -69,6 +71,13 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
     }
   }
 
+  // shared documents can contain anything, so anyone can report one to the instance's contact address
+  const reportHref =
+    contactEmail &&
+    `mailto:${contactEmail}?subject=${encodeURIComponent(`Report: ${title}`)}&body=${encodeURIComponent(
+      `Shared document: ${siteUrl}${sharePath(id, title)}\n\nWhat is wrong with it:\n`,
+    )}`
+
   return (
     <div className="flex h-svh flex-col">
       <header className="flex h-12 shrink-0 items-center gap-2 border-b px-2 md:px-3">
@@ -79,6 +88,31 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
         <Separator orientation="vertical" className="mx-1 data-vertical:h-5 data-vertical:self-center" />
         <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{title}</h1>
         <ThemeSwitcher className="hidden bg-muted sm:flex" />
+        {/* visitors who only open a shared link see no other page, so the policy is linked here too */}
+        {privacyPolicy && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
+                <Link href="/privacy" aria-label="Privacy policy">
+                  <ShieldIcon />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Privacy policy</TooltipContent>
+          </Tooltip>
+        )}
+        {reportHref && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm" asChild className="text-muted-foreground hover:text-foreground">
+                <a href={reportHref} aria-label="Report this document">
+                  <FlagIcon />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Report this document</TooltipContent>
+          </Tooltip>
+        )}
         {originalId ? (
           <Button size="sm" asChild>
             <Link href={`/d/${originalId}`}>

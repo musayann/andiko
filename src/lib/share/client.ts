@@ -2,14 +2,15 @@ import { toast } from "sonner"
 
 import { clearDocShare, db, markDocSynced, needsSync, setDocShare, type Doc } from "@/lib/db"
 
-import { MAX_SHARE_BYTES, utf8Length } from "./protocol"
+import { MAX_SHARE_BYTES, sharePath, utf8Length } from "./protocol"
 import { getOwnerToken } from "./token"
 
 // Browser side of publishing: uploads, sync of later edits, and unpublishing.
 
 const TOO_LARGE = `This document is too large to publish (${MAX_SHARE_BYTES / 1024 / 1024} MB max).`
 
-export const shareUrl = (shareId: string) => `${location.origin}/s/${shareId}`
+/** The public link, with the title in it for readability (see sharePath). */
+export const shareUrl = (shareId: string, title: string) => `${location.origin}${sharePath(shareId, title)}`
 
 let queue: Promise<unknown> = Promise.resolve()
 

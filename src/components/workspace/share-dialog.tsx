@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { ShareSyncState } from "@/hooks/use-share-status"
 import { publishDoc, shareUrl, unpublishDocs } from "@/lib/share/client"
+import { privacyPolicy } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 const SYNC_STATES: Record<ShareSyncState, { description: string; dot: string }> = {
@@ -45,14 +46,14 @@ const copyText = (text: string) => navigator.clipboard.writeText(text).then(
 
 export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, flush }: ShareDialogProps) {
   const [busy, setBusy] = useState<"publish" | "unpublish" | null>(null)
-  const url = shareId ? shareUrl(shareId) : ""
+  const url = shareId ? shareUrl(shareId, title) : ""
 
   const handlePublish = async () => {
     setBusy("publish")
     try {
       await flush()
       const id = await publishDoc(docId)
-      toast.success((await copyText(shareUrl(id))) ? "Published. Link copied" : "Published")
+      toast.success((await copyText(shareUrl(id, title))) ? "Published. Link copied" : "Published")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not publish the document.")
     } finally {
@@ -86,6 +87,19 @@ export function ShareDialog({ open, onOpenChange, docId, title, shareId, sync, f
             {shareId
               ? "Anyone with the link can read this document. Your edits here update it automatically, and only this browser can change it."
               : "Publishing uploads this document so anyone with the link can read it. Your edits here keep the public copy up to date, and only this browser can change it. Your other documents stay in this browser."}
+            {privacyPolicy && (
+              <>
+                {" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener"
+                  className="underline underline-offset-2 hover:text-foreground"
+                >
+                  Privacy policy
+                </a>
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 

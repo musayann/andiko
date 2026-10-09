@@ -15,7 +15,7 @@ A local-first Markdown editor with live preview and PDF export. Built with Next.
   - YAML front matter (`title`, `tags`, `breaks`)
 - **PDF export**: a real download rendered by headless Chrome on the server, with selectable text, embedded fonts and page numbers. Browser printing is available as a fallback.
 - **Local-first**: documents live in the browser (IndexedDB). You can import and download `.md` files. There is no account, and only documents you share are stored on the server.
-- **Sharing**: Share publishes a read-only link at `/s/<id>`. Your later edits sync to it automatically, and only your browser can change or remove it. Visitors can save their own editable copy, which never touches the original.
+- **Sharing**: Share publishes a read-only link at `/s/<title>-<id>`. Only the id identifies the document: links made before a title change, or with a bare id, redirect to the current title. Your later edits sync to it automatically, and only your browser can change or remove it. Visitors can save their own editable copy, which never touches the original.
 - **Folders (optional)**: group documents in nested folders. Move them with the ⋯ menu or by dragging in the sidebar. Documents without a folder stay at the top level, as before.
 
 ## Getting started
@@ -77,6 +77,8 @@ Local edits to a shared document are pushed a couple of seconds after they are s
 
 Shared pages render someone else's Markdown on the same origin as your own documents, so on top of the sanitizer they get a strict nonce-based Content Security Policy (see `src/lib/security/shared-page-policy.ts`, applied by `src/proxy.ts`) and are kept out of search results.
 
+A privacy policy at `/privacy` describes all of this. It names whoever runs the instance, so it is only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are all set (see `.env.sample`). Otherwise the page returns 404 and nothing links to it. The policy names Vercel and Neon as providers, so check `src/app/privacy/page.tsx` if you host elsewhere. With a contact email set, shared pages also get a Report link that emails it, which hosting laws such as the EU Digital Services Act require of public instances.
+
 Clearing site data loses the token. The published copies then stay online but can no longer be changed from that browser; share the document again to get a new link.
 
 ## Project layout
@@ -87,7 +89,8 @@ src/
     page.tsx                  landing page (also sitemap.ts, robots.ts, manifest.ts, opengraph-image.tsx)
     d/page.tsx                opens the last document (or seeds the welcome doc)
     d/[id]/page.tsx           editor workspace
-    s/[id]/page.tsx           read-only view of a shared document
+    s/[slug]/page.tsx         read-only view of a shared document
+    privacy/page.tsx          privacy policy
     api/export/pdf/route.ts   PDF rendering endpoint
     api/shares/               publish, update and unpublish shared documents
   components/
