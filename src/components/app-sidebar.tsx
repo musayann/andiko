@@ -49,7 +49,6 @@ import {
   SidebarInput,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -501,7 +500,6 @@ export function AppSidebar() {
           </>
         )}
       </SidebarFooter>
-      <SidebarRail />
 
       <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>
