@@ -35,6 +35,9 @@ export interface SidebarTree {
   /** Opens the name dialog; `moveInto` is moved into the folder once it exists. */
   onNewFolder: (parentId?: string, moveInto?: TreeItem) => void
   onRenameFolder: (folder: Folder) => void
+  onExportFolder: (node: FolderNode<DocSummary>) => void
+  /** Opens the import picker; files land in `folderId` (undefined = top level). */
+  onImportInto: (folderId?: string) => void
   onDeleteFolder: (node: FolderNode<DocSummary>) => void
 }
 

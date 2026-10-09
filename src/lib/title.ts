@@ -4,9 +4,9 @@ const FENCE = /^\s*(```|~~~)/
 
 /**
  * Document title: front-matter `title`, else the first H1,
- * else "Untitled". Cheap line scan so it can run on every save.
+ * else `fallback`. Cheap line scan so it can run on every save.
  */
-export function getDocTitle(content: string): string {
+export function getDocTitle(content: string, fallback = "Untitled"): string {
   const frontMatter = FRONT_MATTER.exec(content)
   if (frontMatter) {
     const title = FRONT_MATTER_TITLE.exec(frontMatter[1])
@@ -19,9 +19,9 @@ export function getDocTitle(content: string): string {
     if (FENCE.test(line)) inFence = !inFence
     if (inFence) continue
     const heading = /^#\s+(.+?)\s*#*\s*$/.exec(line)
-    if (heading) return heading[1].replace(/[*_`~=]/g, "").trim() || "Untitled"
+    if (heading) return heading[1].replace(/[*_`~=]/g, "").trim() || fallback
   }
-  return "Untitled"
+  return fallback
 }
 
 /** File-system friendly name for downloads. */

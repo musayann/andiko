@@ -1,7 +1,7 @@
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
-import { FilePlusIcon, FolderPlusIcon, HardDriveIcon, SearchIcon, UploadIcon } from "lucide-react"
+import { DownloadIcon, FilePlusIcon, FolderPlusIcon, HardDriveIcon, SearchIcon, UploadIcon } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { parseArchive, safeName, stripExtension, zipTree } from "@/lib/archive"
 import {
   createDoc,
   createFolder,
@@ -53,12 +54,13 @@ import {
   deleteDoc,
   deleteFolder,
   duplicateDoc,
+  importFolder,
   moveDoc,
   moveFolder,
   renameFolder,
   type Folder,
 } from "@/lib/db"
-import { downloadMarkdown } from "@/lib/export"
+import { downloadMarkdown, downloadZip } from "@/lib/export"
 import {
   buildTree,
   canMoveFolder,
@@ -75,6 +77,8 @@ import { cn } from "@/lib/utils"
 
 const HEADER_BUTTON = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
 
+const isZip = (file: File) => /\.zip$/i.test(file.name)
+
 type NameDialog = { mode: "create"; parentId?: string; moveInto?: TreeItem } | { mode: "rename"; folder: Folder }
 
 export function AppSidebar() {
@@ -90,6 +94,8 @@ export function AppSidebar() {
   const [dragging, setDragging] = useState<TreeItem | null>(null)
   const [hovered, setHovered] = useState<DropTarget | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // where the picked files go; set each time the picker opens
+  const importTarget = useRef<string | undefined>(undefined)
 
   const data = useLiveQuery(async () => {
     const docs = await db.docs.orderBy("updatedAt").reverse().toArray()
@@ -155,15 +161,57 @@ export function AppSidebar() {
     router.push(`/d/${id}`)
   }
 
+  const openImport = (folderId?: string) => {
+    importTarget.current = folderId
+    fileInputRef.current?.click()
+  }
+
+  /** Markdown files become documents; each zip becomes a folder of them. */
   const handleImport = async (files: FileList | null) => {
     if (!files?.length) return
-    let firstId: string | undefined
+    const folderId = importTarget.current
+    const docIds: string[] = []
+    const newFolderIds: string[] = []
     for (const file of Array.from(files)) {
-      const id = await createDoc(await file.text())
-      firstId ??= id
+      if (!isZip(file)) {
+        docIds.push(await createDoc(await file.text(), folderId, stripExtension(file.name)))
+        continue
+      }
+      try {
+        const archive = parseArchive(new Uint8Array(await file.arrayBuffer()), file.name)
+        const imported = await importFolder(archive, folderId)
+        docIds.push(...imported.docIds)
+        newFolderIds.push(imported.folderIds[0])
+      } catch (error) {
+        toast.error(`Couldn’t import ${file.name}`, { description: error instanceof Error ? error.message : undefined })
+      }
     }
-    toast.success(files.length === 1 ? `Imported ${files[0].name}` : `Imported ${files.length} files`)
-    if (firstId) router.push(`/d/${firstId}`)
+    if (docIds.length === 0) return
+    expandAll([...folderChain(folders, folderId).map((folder) => folder.id), ...newFolderIds])
+    toast.success(
+      files.length === 1 && !isZip(files[0])
+        ? `Imported ${files[0].name}`
+        : `Imported ${docIds.length} document${docIds.length === 1 ? "" : "s"}`,
+    )
+    router.push(`/d/${docIds[0]}`)
+  }
+
+  const handleExportFolder = async ({ folder }: FolderNode<DocSummary>) => {
+    const ids = new Set([folder.id, ...descendantIds(folders, folder.id)])
+    const contents = await db.docs.where("folderId").anyOf([...ids]).toArray()
+    // the folder's parent is left out, so it is the tree's only top-level folder
+    const subtree = buildTree(folders.filter((candidate) => ids.has(candidate.id)), contents)
+    downloadZip(zipTree(subtree), safeName(folder.name, "folder"))
+  }
+
+  const handleExportAll = async () => {
+    const all = await db.docs.toArray()
+    if (all.length === 0 && folders.length === 0) {
+      toast("Nothing to export")
+      return
+    }
+    // sv-SE formats the local date as YYYY-MM-DD
+    downloadZip(zipTree(buildTree(folders, all)), `andiko-${new Date().toLocaleDateString("sv-SE")}`)
   }
 
   const handleDuplicate = async (doc: DocSummary) => {
@@ -252,6 +300,8 @@ export function AppSidebar() {
     onDeleteDoc: setPendingDelete,
     onNewFolder: (parentId, moveInto) => setNameDialog({ mode: "create", parentId, moveInto }),
     onRenameFolder: (folder) => setNameDialog({ mode: "rename", folder }),
+    onExportFolder: (node) => void handleExportFolder(node),
+    onImportInto: openImport,
     onDeleteFolder: setPendingFolderDelete,
   }
 
@@ -272,13 +322,27 @@ export function AppSidebar() {
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Import Markdown"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => openImport()}
                   className={HEADER_BUTTON}
                 >
                   <UploadIcon />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Import .md files</TooltipContent>
+              <TooltipContent>Import .md or .zip files</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Export all as .zip"
+                  onClick={() => void handleExportAll()}
+                  className={HEADER_BUTTON}
+                >
+                  <DownloadIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Export all as .zip</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -312,7 +376,7 @@ export function AppSidebar() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".md,.markdown,.mdown,.txt,text/markdown,text/plain"
+            accept=".md,.markdown,.mdown,.txt,.zip,text/markdown,text/plain,application/zip"
             multiple
             hidden
             onChange={(event) => {

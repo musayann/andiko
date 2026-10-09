@@ -30,6 +30,10 @@ export function downloadMarkdown(content: string, title: string) {
   saveBlob(new Blob([content], { type: "text/markdown;charset=utf-8" }), `${toFileName(title)}.md`)
 }
 
+export function downloadZip(data: Uint8Array<ArrayBuffer>, name: string) {
+  saveBlob(new Blob([data], { type: "application/zip" }), `${name}.zip`)
+}
+
 export async function downloadPdf(content: string, title: string, options: PdfOptions) {
   const html = await renderStaticDocument(content)
   const response = await fetch("/api/export/pdf", {

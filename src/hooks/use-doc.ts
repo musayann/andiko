@@ -4,7 +4,10 @@ import { db, saveDocContent, setLastDocId } from "@/lib/db"
 
 export type SaveState = "saved" | "saving" | "unsaved"
 
-type LoadState = { status: "loading" } | { status: "missing" } | { status: "ready"; initialContent: string }
+type LoadState =
+  | { status: "loading" }
+  | { status: "missing" }
+  | { status: "ready"; initialContent: string; fileName?: string }
 
 const SAVE_DELAY = 500
 
@@ -63,7 +66,7 @@ export function useDoc(id: string) {
         void saveDocContent(id, content)
       }
       setContentState(content)
-      setLoad({ status: "ready", initialContent: content })
+      setLoad({ status: "ready", initialContent: content, fileName: doc.fileName })
       setLastDocId(id)
     })
     return () => {

@@ -3,9 +3,11 @@
 import {
   ChevronRightIcon,
   FilePlusIcon,
+  FolderDownIcon,
   FolderIcon,
   FolderOpenIcon,
   FolderPlusIcon,
+  ImportIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
@@ -88,6 +90,15 @@ export function FolderItem({ node }: { node: FolderNode<DocSummary> }) {
                 Rename
               </DropdownMenuItem>
               <MoveToMenu item={{ kind: "folder", id: folder.id, parentId: folder.parentId }} />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => tree.onImportInto(folder.id)}>
+                <ImportIcon />
+                Import files here…
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => tree.onExportFolder(node)}>
+                <FolderDownIcon />
+                Export as .zip
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => tree.onDeleteFolder(node)}>
                 <Trash2Icon />

@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from "dexie"
 import { nanoid } from "nanoid"
 
+import type { ImportFolder } from "./archive"
 import { canMoveFolder, descendantIds } from "./folders"
 import { getDocTitle } from "./title"
 
@@ -10,6 +11,8 @@ export interface Doc {
   content: string
   /** Absent for documents outside any folder, which includes every document created before folders existed. */
   folderId?: string
+  /** Name (without extension) of the file it was imported from; the title when the content has none. */
+  fileName?: string
   createdAt: number
   updatedAt: number
 }
@@ -31,32 +34,40 @@ const db = new Dexie("andiko") as Dexie & {
 db.version(1).stores({ docs: "id, updatedAt" })
 // additive only: existing docs have no folderId and simply stay at the top level
 db.version(2).stores({ docs: "id, updatedAt, folderId", folders: "id, parentId" })
+// fileName is not indexed, so it needs no new version
 
 export { db }
 
 const LAST_DOC_KEY = "andiko:last-doc"
 
-export async function createDoc(content = "", folderId?: string): Promise<string> {
+function newDoc(content: string, folderId?: string, fileName?: string): Doc {
   const now = Date.now()
-  const id = nanoid(10)
-  await db.docs.add({
-    id,
-    title: getDocTitle(content),
+  return {
+    id: nanoid(10),
+    title: getDocTitle(content, fileName),
     content,
     ...(folderId && { folderId }),
+    ...(fileName && { fileName }),
     createdAt: now,
     updatedAt: now,
-  })
-  return id
+  }
+}
+
+export async function createDoc(content = "", folderId?: string, fileName?: string): Promise<string> {
+  return db.docs.add(newDoc(content, folderId, fileName))
 }
 
 export async function saveDocContent(id: string, content: string) {
-  await db.docs.update(id, { content, title: getDocTitle(content), updatedAt: Date.now() })
+  await db.docs.update(id, (doc) => {
+    doc.content = content
+    doc.title = getDocTitle(content, doc.fileName)
+    doc.updatedAt = Date.now()
+  })
 }
 
 export async function duplicateDoc(id: string): Promise<string | undefined> {
   const doc = await db.docs.get(id)
-  return doc ? createDoc(doc.content, doc.folderId) : undefined
+  return doc ? createDoc(doc.content, doc.folderId, doc.fileName) : undefined
 }
 
 export async function deleteDoc(id: string) {
@@ -113,6 +124,33 @@ export async function deleteFolder(id: string, { withContents = false } = {}): P
     await db.folders.bulkDelete(folderIds)
     return docIds
   })
+}
+
+/**
+ * Adds an imported folder tree under `parentId` (undefined = top level), all or
+ * nothing. Returns the new folder ids (the imported folder first) and document ids.
+ */
+export async function importFolder(
+  root: ImportFolder,
+  parentId?: string,
+): Promise<{ folderIds: string[]; docIds: string[] }> {
+  const now = Date.now()
+  const folders: Folder[] = []
+  const docs: Doc[] = []
+
+  const collect = (node: ImportFolder, parentId?: string) => {
+    const id = nanoid(10)
+    folders.push({ id, name: node.name, ...(parentId && { parentId }), createdAt: now, updatedAt: now })
+    for (const { content, fileName } of node.docs) docs.push(newDoc(content, id, fileName))
+    for (const child of node.folders) collect(child, id)
+  }
+  collect(root, parentId)
+
+  await db.transaction("rw", db.folders, db.docs, async () => {
+    await db.folders.bulkAdd(folders)
+    await db.docs.bulkAdd(docs)
+  })
+  return { folderIds: folders.map((folder) => folder.id), docIds: docs.map((doc) => doc.id) }
 }
 
 export function getLastDocId(): string | null {

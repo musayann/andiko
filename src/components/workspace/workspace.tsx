@@ -87,6 +87,7 @@ export function Workspace({ id }: { id: string }) {
   return (
     <Editor
       initialContent={load.initialContent}
+      fileName={load.fileName}
       content={content}
       setContent={setContent}
       saveState={saveState}
@@ -97,13 +98,15 @@ export function Workspace({ id }: { id: string }) {
 
 interface EditorProps {
   initialContent: string
+  /** Title fallback for content without one. */
+  fileName?: string
   content: string
   setContent: (value: string) => void
   saveState: SaveState
   flush: () => Promise<void>
 }
 
-function Editor({ initialContent, content, setContent, saveState, flush }: EditorProps) {
+function Editor({ initialContent, fileName, content, setContent, saveState, flush }: EditorProps) {
   const isMobile = useIsMobile()
   const [mode, setModeState] = useState<ViewMode>(loadViewMode)
   const [scrollSync, setScrollSyncState] = useState(loadScrollSync)
@@ -116,7 +119,7 @@ function Editor({ initialContent, content, setContent, saveState, flush }: Edito
 
   // phones get Edit/View only; the chosen mode is kept for larger screens
   const effectiveMode: ViewMode = isMobile && mode === "split" ? "edit" : mode
-  const title = useMemo(() => getDocTitle(content), [content])
+  const title = useMemo(() => getDocTitle(content, fileName), [content, fileName])
 
   const setMode = useCallback((next: ViewMode) => {
     setModeState(next)
