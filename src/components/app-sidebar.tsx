@@ -64,6 +64,7 @@ import { downloadMarkdown, downloadZip } from "@/lib/export"
 import {
   buildTree,
   canMoveFolder,
+  collectDocs,
   countDocs,
   descendantIds,
   folderChain,
@@ -73,6 +74,7 @@ import {
   type DocSummary,
   type FolderNode,
 } from "@/lib/folders"
+import { shareUrl, unpublishDocs } from "@/lib/share/client"
 import { cn } from "@/lib/utils"
 
 const HEADER_BUTTON = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
@@ -101,7 +103,9 @@ export function AppSidebar() {
     const docs = await db.docs.orderBy("updatedAt").reverse().toArray()
     const folders = await db.folders.toArray()
     return {
-      docs: docs.map(({ id, title, updatedAt, folderId }): DocSummary => ({ id, title, updatedAt, folderId })),
+      docs: docs.map(
+        ({ id, title, updatedAt, folderId, shareId }): DocSummary => ({ id, title, updatedAt, folderId, shareId }),
+      ),
       folders,
     }
   }, [])
@@ -224,6 +228,30 @@ export function AppSidebar() {
     if (full) downloadMarkdown(full.content, full.title)
   }
 
+  const handleCopyLink = async (doc: DocSummary) => {
+    if (!doc.shareId) return
+    try {
+      await navigator.clipboard.writeText(shareUrl(doc.shareId))
+      toast.success("Link copied")
+    } catch {
+      toast.error("Could not copy to clipboard")
+    }
+  }
+
+  /** Takes published documents offline before deleting them. False (and nothing deleted) when that fails. */
+  const unpublishBeforeDelete = async (shared: DocSummary[]) => {
+    if (shared.length === 0) return true
+    try {
+      await unpublishDocs(shared.map((doc) => doc.id))
+      return true
+    } catch (error) {
+      toast.error("Couldn’t unpublish, so nothing was deleted", {
+        description: error instanceof Error ? error.message : undefined,
+      })
+      return false
+    }
+  }
+
   /** Navigates away when the open document was just deleted. */
   const leaveIfDeleted = async (deletedIds: string[]) => {
     if (!activeId || !deletedIds.includes(activeId)) return
@@ -235,6 +263,7 @@ export function AppSidebar() {
     if (!pendingDelete) return
     const { id, title } = pendingDelete
     setPendingDelete(null)
+    if (!(await unpublishBeforeDelete(pendingDelete.shareId ? [pendingDelete] : []))) return
     await deleteDoc(id)
     toast.success(`Deleted “${title}”`)
     await leaveIfDeleted([id])
@@ -245,6 +274,9 @@ export function AppSidebar() {
     const { folder } = pendingFolderDelete
     const removedFolders = new Set([folder.id, ...(withContents ? descendantIds(folders, folder.id) : [])])
     setPendingFolderDelete(null)
+    // "folder only" moves the documents up, so they stay published
+    const shared = withContents ? collectDocs(pendingFolderDelete).filter((doc) => doc.shareId) : []
+    if (!(await unpublishBeforeDelete(shared))) return
     const deletedDocs = await deleteFolder(folder.id, { withContents })
     setExpandedIds((prev) => new Set([...prev].filter((id) => !removedFolders.has(id))))
     toast.success(
@@ -263,6 +295,7 @@ export function AppSidebar() {
       name: folder.name,
       docCount: countDocs(pendingFolderDelete),
       folderCount: descendantIds(folders, folder.id).size,
+      sharedCount: collectDocs(pendingFolderDelete).filter((doc) => doc.shareId).length,
       destination: parent ? `“${parent.name}”` : "the top level",
     }
   }, [pendingFolderDelete, folders])
@@ -297,6 +330,7 @@ export function AppSidebar() {
     onNewDoc: (folderId) => void handleNew(folderId),
     onDuplicateDoc: (doc) => void handleDuplicate(doc),
     onDownloadDoc: (doc) => void handleDownload(doc),
+    onCopyDocLink: (doc) => void handleCopyLink(doc),
     onDeleteDoc: setPendingDelete,
     onNewFolder: (parentId, moveInto) => setNameDialog({ mode: "create", parentId, moveInto }),
     onRenameFolder: (folder) => setNameDialog({ mode: "rename", folder }),
@@ -449,6 +483,7 @@ export function AppSidebar() {
             <AlertDialogTitle>Delete “{pendingDelete?.title}”?</AlertDialogTitle>
             <AlertDialogDescription>
               This permanently removes the document from this browser. Download it first if you want a copy.
+              {pendingDelete?.shareId && " Its public link will stop working too."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

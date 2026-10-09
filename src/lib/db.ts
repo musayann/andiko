@@ -14,6 +14,10 @@ export interface Doc {
   folderId?: string
   /** Name (without extension) of the file it was imported from; the title when the content has none. */
   fileName?: string
+  /** Public id of the published copy at /s/{shareId}; absent while the document is private. */
+  shareId?: string
+  /** The `updatedAt` last pushed to the published copy; edits after it are still to sync. */
+  syncedAt?: number
   createdAt: number
   updatedAt: number
 }
@@ -36,6 +40,8 @@ db.version(1).stores({ docs: "id, updatedAt" })
 // additive only: existing docs have no folderId and simply stay at the top level
 db.version(2).stores({ docs: "id, updatedAt, folderId", folders: "id, parentId" })
 // fileName is not indexed, so it needs no new version
+// additive only: documents without shareId are simply not published
+db.version(3).stores({ docs: "id, updatedAt, folderId, shareId" })
 
 export { db }
 
@@ -81,6 +87,24 @@ export async function deleteDoc(id: string) {
 /** Moves a document into a folder, or to the top level. Leaves updatedAt alone: it tracks content edits. */
 export async function moveDoc(id: string, folderId?: string) {
   await db.docs.update(id, { folderId })
+}
+
+/** True when a published document has edits its public copy doesn't have yet. */
+export const needsSync = (doc: Doc) => doc.shareId !== undefined && doc.updatedAt > (doc.syncedAt ?? 0)
+
+export async function setDocShare(id: string, shareId: string, syncedAt: number) {
+  await db.docs.update(id, { shareId, syncedAt })
+}
+
+/** Records a push of the version saved at `updatedAt`, unless the document was unpublished or republished meanwhile. */
+export async function markDocSynced(id: string, shareId: string, updatedAt: number) {
+  await db.docs.update(id, (doc) => {
+    if (doc.shareId === shareId) doc.syncedAt = Math.max(doc.syncedAt ?? 0, updatedAt)
+  })
+}
+
+export async function clearDocShare(id: string) {
+  await db.docs.update(id, { shareId: undefined, syncedAt: undefined })
 }
 
 export async function createFolder(name: string, parentId?: string): Promise<string> {

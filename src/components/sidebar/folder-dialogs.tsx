@@ -96,6 +96,8 @@ export interface FolderDeletion {
   name: string
   docCount: number
   folderCount: number
+  /** Published documents among them, which "Delete all" unpublishes. */
+  sharedCount: number
   /** Where the contents go when only the folder is deleted, e.g. "“Work”" or "the top level". */
   destination: string
 }
@@ -114,6 +116,9 @@ export function DeleteFolderDialog({ target, onOpenChange, onConfirm }: DeleteFo
         .filter(Boolean)
         .join(" and ")
     : ""
+  const sharedNote = target?.sharedCount
+    ? ` Deleting everything also takes ${plural(target.sharedCount, "published document")} offline.`
+    : ""
 
   return (
     <AlertDialog open={target !== null} onOpenChange={onOpenChange}>
@@ -123,7 +128,7 @@ export function DeleteFolderDialog({ target, onOpenChange, onConfirm }: DeleteFo
           <AlertDialogDescription>
             {empty
               ? "This folder is empty."
-              : `It contains ${contents}. Delete only the folder to move ${target && target.docCount + target.folderCount === 1 ? "it" : "them"} to ${target?.destination}, or delete everything permanently.`}
+              : `It contains ${contents}. Delete only the folder to move ${target && target.docCount + target.folderCount === 1 ? "it" : "them"} to ${target?.destination}, or delete everything permanently.${sharedNote}`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

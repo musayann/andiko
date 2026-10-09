@@ -1,6 +1,7 @@
 "use client"
 
 import type { EditorView } from "@codemirror/view"
+import { useLiveQuery } from "dexie-react-hooks"
 import { FileQuestionIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
@@ -14,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useDoc, type SaveState } from "@/hooks/use-doc"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useScrollSync } from "@/hooks/use-scroll-sync"
+import { db, needsSync } from "@/lib/db"
 import { downloadMarkdown, printDocument } from "@/lib/export"
 import { getDocTitle } from "@/lib/title"
 import { cn } from "@/lib/utils"
@@ -21,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { ExportPdfDialog } from "./export-pdf-dialog"
 import { FormatBar } from "./format-bar"
 import { PreviewPane } from "./preview-pane"
+import { ShareDialog } from "./share-dialog"
 import { Toolbar } from "./toolbar"
 import {
   loadScrollSync,
@@ -46,7 +49,8 @@ function layoutFor(mode: ViewMode, split: number): Layout {
   return { editor: split, preview: 100 - split }
 }
 
-export function Workspace({ id }: { id: string }) {
+/** `sharing` is false when the server has no database to publish to. */
+export function Workspace({ id, sharing }: { id: string; sharing: boolean }) {
   const { load, content, setContent, saveState, flush } = useDoc(id)
 
   if (load.status === "loading") {
@@ -86,6 +90,8 @@ export function Workspace({ id }: { id: string }) {
 
   return (
     <Editor
+      id={id}
+      sharing={sharing}
       initialContent={load.initialContent}
       fileName={load.fileName}
       content={content}
@@ -97,6 +103,8 @@ export function Workspace({ id }: { id: string }) {
 }
 
 interface EditorProps {
+  id: string
+  sharing: boolean
   initialContent: string
   /** Title fallback for content without one. */
   fileName?: string
@@ -106,11 +114,12 @@ interface EditorProps {
   flush: () => Promise<void>
 }
 
-function Editor({ initialContent, fileName, content, setContent, saveState, flush }: EditorProps) {
+function Editor({ id, sharing, initialContent, fileName, content, setContent, saveState, flush }: EditorProps) {
   const isMobile = useIsMobile()
   const [mode, setModeState] = useState<ViewMode>(loadViewMode)
   const [scrollSync, setScrollSyncState] = useState(loadScrollSync)
   const [pdfOpen, setPdfOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const [view, setView] = useState<EditorView | null>(null)
   const previewRef = useRef<HTMLDivElement>(null)
   const [initialSplit] = useState(loadSplit)
@@ -120,6 +129,10 @@ function Editor({ initialContent, fileName, content, setContent, saveState, flus
   // phones get Edit/View only; the chosen mode is kept for larger screens
   const effectiveMode: ViewMode = isMobile && mode === "split" ? "edit" : mode
   const title = useMemo(() => getDocTitle(content, fileName), [content, fileName])
+  const share = useLiveQuery(async () => {
+    const doc = await db.docs.get(id)
+    return { shareId: doc?.shareId, pending: doc !== undefined && needsSync(doc) }
+  }, [id])
 
   const setMode = useCallback((next: ViewMode) => {
     setModeState(next)
@@ -193,6 +206,8 @@ function Editor({ initialContent, fileName, content, setContent, saveState, flus
         allowSplit={!isMobile}
         scrollSync={scrollSync}
         onScrollSyncChange={setScrollSync}
+        shared={share?.shareId !== undefined}
+        onShare={sharing ? () => setShareOpen(true) : undefined}
         onExportPdf={() => setPdfOpen(true)}
         onPrint={handlePrint}
         onDownloadMarkdown={() => downloadMarkdown(content, title)}
@@ -232,6 +247,17 @@ function Editor({ initialContent, fileName, content, setContent, saveState, flus
         </ResizablePanel>
       </ResizablePanelGroup>
       <ExportPdfDialog open={pdfOpen} onOpenChange={setPdfOpen} content={content} title={title} />
+      {sharing && (
+        <ShareDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          docId={id}
+          title={title}
+          shareId={share?.shareId}
+          pending={share?.pending ?? false}
+          flush={flush}
+        />
+      )}
     </div>
   )
 }
