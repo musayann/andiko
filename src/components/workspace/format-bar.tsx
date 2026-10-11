@@ -1,5 +1,6 @@
 "use client"
 
+import { redo, undo } from "@codemirror/commands"
 import type { StateCommand } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
 import {
@@ -27,6 +28,7 @@ import {
   OctagonAlertIcon,
   PilcrowIcon,
   PlusIcon,
+  Redo2Icon,
   SigmaIcon,
   SquareCodeIcon,
   StrikethroughIcon,
@@ -35,6 +37,7 @@ import {
   TableIcon,
   TextQuoteIcon,
   TriangleAlertIcon,
+  Undo2Icon,
   WorkflowIcon,
 } from "lucide-react"
 import { Toolbar as ToolbarPrimitive } from "radix-ui"
@@ -80,6 +83,9 @@ interface Action {
   /** shortcut keys pressed together with Cmd (Mac) or Ctrl */
   keys?: string[]
 }
+
+const UNDO: Action = { label: "Undo", icon: Undo2Icon, command: undo, keys: ["Z"] }
+const REDO: Action = { label: "Redo", icon: Redo2Icon, command: redo, keys: ["Shift", "Z"] }
 
 // index = heading level
 const HEADINGS: { label: string; icon: Icon }[] = [
@@ -234,7 +240,13 @@ function Group({ children }: { children: ReactNode }) {
   return <div className="flex items-center">{children}</div>
 }
 
-export function FormatBar({ view }: { view: EditorView | null }) {
+interface FormatBarProps {
+  view: EditorView | null
+  canUndo: boolean
+  canRedo: boolean
+}
+
+export function FormatBar({ view, canUndo, canRedo }: FormatBarProps) {
   const disabled = !view
 
   const run = (command: StateCommand) => {
@@ -249,12 +261,12 @@ export function FormatBar({ view }: { view: EditorView | null }) {
     view?.focus()
   }
 
-  const actionButton = ({ label, icon: Icon, command, keys }: Action) => (
+  const actionButton = ({ label, icon: Icon, command, keys }: Action, enabled = true) => (
     <BarButton
       key={label}
       label={label}
       keys={keys}
-      disabled={disabled}
+      disabled={disabled || !enabled}
       // keep the editor focused, with its selection
       onMouseDown={(event) => event.preventDefault()}
       onClick={() => run(command)}
@@ -277,6 +289,10 @@ export function FormatBar({ view }: { view: EditorView | null }) {
       className="flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-0.5 border-b border-(--cm-panel-border) bg-(--cm-panel) px-2 py-1"
     >
       <Group>
+        {actionButton(UNDO, canUndo)}
+        {actionButton(REDO, canRedo)}
+      </Group>
+      <Group>
         <DropdownMenu>
           <BarButton label="Heading" menu disabled={disabled} size="sm" className="gap-0.5 px-1.5">
             <HeadingIcon />
@@ -292,10 +308,10 @@ export function FormatBar({ view }: { view: EditorView | null }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </Group>
-      <Group>{INLINE.map(actionButton)}</Group>
-      <Group>{LINES.map(actionButton)}</Group>
+      <Group>{INLINE.map((action) => actionButton(action))}</Group>
+      <Group>{LINES.map((action) => actionButton(action))}</Group>
       <Group>
-        {LINKS.map(actionButton)}
+        {LINKS.map((action) => actionButton(action))}
         <DropdownMenu>
           <BarButton label="Table" menu disabled={disabled}>
             <TableIcon />
@@ -304,7 +320,7 @@ export function FormatBar({ view }: { view: EditorView | null }) {
             <TablePicker onPick={(rows, cols) => run(insertTable(rows - 1, cols))} />
           </DropdownMenuContent>
         </DropdownMenu>
-        {BLOCKS.map(actionButton)}
+        {BLOCKS.map((action) => actionButton(action))}
       </Group>
       <Group>
         <DropdownMenu>

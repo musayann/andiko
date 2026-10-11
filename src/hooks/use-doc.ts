@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { db, saveDocContent, setLastDocId } from "@/lib/db"
+import { getDocWithHistory, saveDocContent, setLastDocId } from "@/lib/db"
 
 // no "saving" state: IndexedDB writes are quick enough that showing one only flickers
 export type SaveState = "saved" | "unsaved"
@@ -8,9 +8,16 @@ export type SaveState = "saved" | "unsaved"
 type LoadState =
   | { status: "loading" }
   | { status: "missing" }
-  | { status: "ready"; initialContent: string; fileName?: string }
+  // `history` is the editor's undo history for `initialContent`, when one was saved with it
+  | { status: "ready"; initialContent: string; fileName?: string; history?: unknown }
 
 const SAVE_DELAY = 500
+
+interface Pending {
+  content: string
+  /** Serializes the editor history; called on save rather than on every keystroke. */
+  history?: () => unknown
+}
 
 interface Backup {
   content: string
@@ -41,7 +48,8 @@ function takeBackup(id: string): Backup | null {
 }
 
 /**
- * Loads a document and autosaves edits (debounced). Pending changes are
+ * Loads a document and autosaves edits (debounced), together with the
+ * editor's undo history so it survives reloads. Pending changes are
  * flushed when the tab is hidden and when the component unmounts.
  * Mount with `key={id}` so switching documents starts from a clean state.
  */
@@ -49,25 +57,28 @@ export function useDoc(id: string) {
   const [load, setLoad] = useState<LoadState>({ status: "loading" })
   const [content, setContentState] = useState("")
   const [saveState, setSaveState] = useState<SaveState>("saved")
-  const pending = useRef<string | null>(null)
+  const pending = useRef<Pending | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     let cancelled = false
-    db.docs.get(id).then((doc) => {
+    getDocWithHistory(id).then(({ doc, history: stored }) => {
       if (cancelled) return
       if (!doc) {
         setLoad({ status: "missing" })
         return
       }
       let content = doc.content
+      // undoing with a history saved for other content would corrupt the document
+      let history = stored?.updatedAt === doc.updatedAt ? stored.history : undefined
       const backup = takeBackup(id)
       if (backup && backup.at > doc.updatedAt && backup.content !== content) {
         content = backup.content
+        history = undefined
         void saveDocContent(id, content)
       }
       setContentState(content)
-      setLoad({ status: "ready", initialContent: content, fileName: doc.fileName })
+      setLoad({ status: "ready", initialContent: content, fileName: doc.fileName, history })
       setLastDocId(id)
     })
     return () => {
@@ -81,7 +92,7 @@ export function useDoc(id: string) {
     if (value === null) return
     pending.current = null
     try {
-      await saveDocContent(id, value)
+      await saveDocContent(id, value.content, value.history?.())
       setSaveState(pending.current === null ? "saved" : "unsaved")
     } catch {
       pending.current ??= value
@@ -90,9 +101,9 @@ export function useDoc(id: string) {
   }, [id])
 
   const setContent = useCallback(
-    (value: string) => {
+    (value: string, history?: () => unknown) => {
       setContentState(value)
-      pending.current = value
+      pending.current = { content: value, history }
       setSaveState("unsaved")
       clearTimeout(timer.current)
       timer.current = setTimeout(flush, SAVE_DELAY)
@@ -102,7 +113,7 @@ export function useDoc(id: string) {
 
   useEffect(() => {
     const onPageHide = () => {
-      if (pending.current !== null) writeBackup(id, pending.current)
+      if (pending.current !== null) writeBackup(id, pending.current.content)
       void flush()
     }
     const onVisibility = () => {

@@ -22,6 +22,19 @@ export interface Doc {
   updatedAt: number
 }
 
+/**
+ * A document's undo/redo history. It lives in its own table, apart from
+ * `docs`, so it stays in this browser: publishing and exports only read docs.
+ */
+export interface DocHistory {
+  /** The document's id. */
+  id: string
+  /** The editor's serialized history; opaque outside the editor. */
+  history: unknown
+  /** The document's `updatedAt` it was saved with; any other value means it belongs to other content. */
+  updatedAt: number
+}
+
 export interface Folder {
   id: string
   name: string
@@ -34,6 +47,7 @@ export interface Folder {
 const db = new Dexie("andiko") as Dexie & {
   docs: EntityTable<Doc, "id">
   folders: EntityTable<Folder, "id">
+  history: EntityTable<DocHistory, "id">
 }
 
 db.version(1).stores({ docs: "id, updatedAt" })
@@ -42,6 +56,8 @@ db.version(2).stores({ docs: "id, updatedAt, folderId", folders: "id, parentId" 
 // fileName is not indexed, so it needs no new version
 // additive only: documents without shareId are simply not published
 db.version(3).stores({ docs: "id, updatedAt, folderId, shareId" })
+// additive only: documents without a history row start with an empty one
+db.version(4).stores({ history: "id" })
 
 export { db }
 
@@ -64,11 +80,25 @@ export async function createDoc(content = "", folderId?: string, fileName?: stri
   return db.docs.add(newDoc(content, folderId, fileName))
 }
 
-export async function saveDocContent(id: string, content: string) {
-  await db.docs.update(id, (doc) => {
-    doc.content = content
-    doc.title = getDocTitle(content, doc.fileName)
-    doc.updatedAt = Date.now()
+/** Saves new content and, when given, the editor history that leads up to it. */
+export async function saveDocContent(id: string, content: string, history?: unknown) {
+  await db.transaction("rw", db.docs, db.history, async () => {
+    const updatedAt = Date.now()
+    const updated = await db.docs.update(id, (doc) => {
+      doc.content = content
+      doc.title = getDocTitle(content, doc.fileName)
+      doc.updatedAt = updatedAt
+    })
+    // a document deleted meanwhile gets no orphaned history
+    if (updated && history !== undefined) await db.history.put({ id, history, updatedAt })
+  })
+}
+
+/** A document and its editor history, read together so they match. */
+export async function getDocWithHistory(id: string): Promise<{ doc?: Doc; history?: DocHistory }> {
+  return db.transaction("r", db.docs, db.history, async () => {
+    const [doc, history] = await Promise.all([db.docs.get(id), db.history.get(id)])
+    return { doc, history }
   })
 }
 
@@ -78,7 +108,10 @@ export async function duplicateDoc(id: string): Promise<string | undefined> {
 }
 
 export async function deleteDoc(id: string) {
-  await db.docs.delete(id)
+  await db.transaction("rw", db.docs, db.history, async () => {
+    await db.docs.delete(id)
+    await db.history.delete(id)
+  })
 }
 
 // Dexie deletes a property that is updated to undefined, so moving to the top
@@ -132,7 +165,7 @@ export async function moveFolder(id: string, parentId?: string): Promise<boolean
  * with `withContents` the whole subtree is deleted. Returns the deleted document ids.
  */
 export async function deleteFolder(id: string, { withContents = false } = {}): Promise<string[]> {
-  return db.transaction("rw", db.folders, db.docs, async () => {
+  return db.transaction("rw", db.folders, db.docs, db.history, async () => {
     const folder = await db.folders.get(id)
     if (!folder) return []
 
@@ -146,6 +179,7 @@ export async function deleteFolder(id: string, { withContents = false } = {}): P
     const folderIds = [id, ...descendantIds(await db.folders.toArray(), id)]
     const docIds = await db.docs.where("folderId").anyOf(folderIds).primaryKeys()
     await db.docs.bulkDelete(docIds)
+    await db.history.bulkDelete(docIds)
     await db.folders.bulkDelete(folderIds)
     return docIds
   })

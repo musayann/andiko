@@ -105,6 +105,7 @@ export function Workspace({ id, sharing }: { id: string; sharing: boolean }) {
       id={id}
       sharing={sharing}
       initialContent={load.initialContent}
+      initialHistory={load.history}
       fileName={load.fileName}
       content={content}
       setContent={setContent}
@@ -118,21 +119,35 @@ interface EditorProps {
   id: string
   sharing: boolean
   initialContent: string
+  /** Undo history saved with `initialContent`. */
+  initialHistory?: unknown
   /** Title fallback for content without one. */
   fileName?: string
   content: string
-  setContent: (value: string) => void
+  setContent: (value: string, history?: () => unknown) => void
   saveState: SaveState
   flush: () => Promise<void>
 }
 
-function Editor({ id, sharing, initialContent, fileName, content, setContent, saveState, flush }: EditorProps) {
+function Editor({
+  id,
+  sharing,
+  initialContent,
+  initialHistory,
+  fileName,
+  content,
+  setContent,
+  saveState,
+  flush,
+}: EditorProps) {
   const isMobile = useIsMobile()
   const [mode, setModeState] = useState<ViewMode>(loadViewMode)
   const [scrollSync, setScrollSyncState] = useState(loadScrollSync)
   const [pdfOpen, setPdfOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [view, setView] = useState<EditorView | null>(null)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
   const [initialSplit] = useState(loadSplit)
   const splitRef = useRef(initialSplit)
@@ -142,6 +157,11 @@ function Editor({ id, sharing, initialContent, fileName, content, setContent, sa
   const effectiveMode: ViewMode = isMobile && mode === "split" ? "edit" : mode
   const title = useMemo(() => getDocTitle(content, fileName), [content, fileName])
   const share = useShareStatus(id)
+
+  const handleHistoryChange = useCallback((undo: boolean, redo: boolean) => {
+    setCanUndo(undo)
+    setCanRedo(redo)
+  }, [])
 
   const setMode = useCallback((next: ViewMode) => {
     setModeState(next)
@@ -229,9 +249,15 @@ function Editor({ id, sharing, initialContent, fileName, content, setContent, sa
       >
         <ResizablePanel id="editor" collapsible collapsedSize={0} minSize="20%">
           <div className="flex h-full flex-col" inert={effectiveMode === "view"}>
-            <FormatBar view={view} />
+            <FormatBar view={view} canUndo={canUndo} canRedo={canRedo} />
             <div className="min-h-0 flex-1">
-              <EditorPane initialValue={initialContent} onChange={setContent} onReady={setView} />
+              <EditorPane
+                initialValue={initialContent}
+                initialHistory={initialHistory}
+                onChange={setContent}
+                onReady={setView}
+                onHistoryChange={handleHistoryChange}
+              />
             </div>
           </div>
         </ResizablePanel>

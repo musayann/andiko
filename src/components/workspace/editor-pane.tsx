@@ -1,12 +1,16 @@
 "use client"
 
+import { redo, redoDepth, undoDepth } from "@codemirror/commands"
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown"
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
 import { languages } from "@codemirror/language-data"
-import { EditorView } from "@codemirror/view"
+import type { EditorState } from "@codemirror/state"
+import { EditorView, keymap, type ViewUpdate } from "@codemirror/view"
 import { tags as t } from "@lezer/highlight"
 import CodeMirror from "@uiw/react-codemirror"
+import { useCallback, useMemo } from "react"
 
+import { historyToJSON, restoreState } from "@/lib/editor-history"
 import { formatKeymap } from "@/lib/formatting"
 
 // The editor is always dark, even though the rest of the app is light
@@ -72,21 +76,59 @@ const extensions = [
   syntaxHighlighting(highlightStyle),
   editorTheme,
   formatKeymap,
+  // CodeMirror redoes with Ctrl+Y on Windows; this makes the Ctrl+Shift+Z shown on the redo button work there too
+  keymap.of([{ key: "Mod-Shift-z", run: redo, preventDefault: true }]),
 ]
 
 interface EditorPaneProps {
   initialValue: string
-  onChange: (value: string) => void
+  /** Undo history saved with `initialValue`. */
+  initialHistory?: unknown
+  /** `history` serializes the undo history that leads up to `value`, for saving with it. */
+  onChange: (value: string, history: () => unknown) => void
   onReady: (view: EditorView) => void
+  /** Whether there is anything to undo or redo; reported on creation and after each edit. */
+  onHistoryChange: (canUndo: boolean, canRedo: boolean) => void
 }
 
-export default function EditorPane({ initialValue, onChange, onReady }: EditorPaneProps) {
+export default function EditorPane({
+  initialValue,
+  initialHistory,
+  onChange,
+  onReady,
+  onHistoryChange,
+}: EditorPaneProps) {
+  // only read when the editor is created
+  const initialState = useMemo(
+    () => (initialHistory === undefined ? undefined : restoreState(initialValue, initialHistory)),
+    [initialValue, initialHistory],
+  )
+
+  const reportHistory = useCallback(
+    (state: EditorState) => onHistoryChange(undoDepth(state) > 0, redoDepth(state) > 0),
+    [onHistoryChange],
+  )
+
+  // stable, as CodeMirror is reconfigured whenever onChange changes. The history
+  // only changes along with the document, so edits are enough to keep it current.
+  const handleChange = useCallback(
+    (value: string, update: ViewUpdate) => {
+      onChange(value, () => historyToJSON(update.state))
+      reportHistory(update.state)
+    },
+    [onChange, reportHistory],
+  )
+
   return (
     <CodeMirror
       // uncontrolled: `value` is only the initial document; edits flow out via onChange
       value={initialValue}
-      onChange={onChange}
-      onCreateEditor={onReady}
+      initialState={initialState}
+      onChange={handleChange}
+      onCreateEditor={(view, state) => {
+        onReady(view)
+        reportHistory(state)
+      }}
       extensions={extensions}
       // colours come from the --cm-* CSS variables used in editorTheme
       theme="none"
