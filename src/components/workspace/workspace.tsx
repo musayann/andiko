@@ -1,7 +1,7 @@
 "use client"
 
 import type { EditorView } from "@codemirror/view"
-import { FileQuestionIcon } from "lucide-react"
+import { FileQuestionIcon, LoaderCircleIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -16,6 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useScrollSync } from "@/hooks/use-scroll-sync"
 import { useShareStatus, type ShareStatus, type ShareSyncState } from "@/hooks/use-share-status"
 import { downloadMarkdown, printDocument } from "@/lib/export"
+import { SHARE_PARAM } from "@/lib/share/protocol"
 import { getDocTitle } from "@/lib/title"
 import { cn } from "@/lib/utils"
 
@@ -61,8 +62,31 @@ function publicCopySync({ sync }: ShareStatus, saveState: SaveState): ShareSyncS
   return sync === "synced" && saveState !== "saved" ? "syncing" : sync
 }
 
-/** `sharing` is false when the server has no database to publish to. */
-export function Workspace({ id, sharing }: { id: string; sharing: boolean }) {
+/** Sends a link to a published document on to its public copy, in a browser that doesn't have the document. */
+function OpenPublicCopy({ shareId }: { shareId: string }) {
+  useEffect(() => {
+    // a full page load rather than a client-side navigation, so the shared page gets its strict
+    // Content Security Policy (see src/proxy.ts); replace, so Back skips this page
+    location.replace(`/s/${shareId}`)
+  }, [shareId])
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-sm text-muted-foreground">
+      <LoaderCircleIcon className="size-5 animate-spin" aria-hidden />
+      <p>Opening the shared version…</p>
+    </div>
+  )
+}
+
+interface WorkspaceProps {
+  id: string
+  /** False when the server has no database to publish to. */
+  sharing: boolean
+  /** The public id named in the link (see docPath), opened instead when this browser doesn't have the document. */
+  linkShareId?: string
+}
+
+export function Workspace({ id, sharing, linkShareId }: WorkspaceProps) {
   const { load, content, setContent, saveState, flush } = useDoc(id)
 
   if (load.status === "loading") {
@@ -86,6 +110,7 @@ export function Workspace({ id, sharing }: { id: string; sharing: boolean }) {
   }
 
   if (load.status === "missing") {
+    if (linkShareId) return <OpenPublicCopy shareId={linkShareId} />
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
         <FileQuestionIcon className="size-10 text-muted-foreground" />
@@ -176,6 +201,16 @@ function Editor({
   useEffect(() => {
     document.title = `${title} · Andiko`
   }, [title])
+
+  // While published, the address bar names the public id too, so a link copied from it opens
+  // the public copy in browsers that don't have this document (see OpenPublicCopy)
+  useEffect(() => {
+    if (!share.loaded) return
+    const url = new URL(location.href)
+    if (share.shareId) url.searchParams.set(SHARE_PARAM, share.shareId)
+    else url.searchParams.delete(SHARE_PARAM)
+    if (url.href !== location.href) window.history.replaceState(null, "", url)
+  }, [share.loaded, share.shareId])
 
   useEffect(() => {
     groupRef.current?.setLayout(layoutFor(effectiveMode, splitRef.current))

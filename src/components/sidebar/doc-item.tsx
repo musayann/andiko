@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import type { DocSummary } from "@/lib/folders"
+import { docPath } from "@/lib/share/protocol"
 
 import { MoveToMenu } from "./move-to-menu"
 import { useDragSource, useSidebarTree } from "./tree-context"
@@ -46,7 +47,7 @@ export function DocItem({ doc, path }: { doc: DocSummary; path?: string }) {
   return (
     <SidebarMenuItem {...drag}>
       <SidebarMenuButton asChild isActive={doc.id === tree.activeId} className={DOC_BUTTON}>
-        <Link href={`/d/${doc.id}`}>
+        <Link href={docPath(doc.id, doc.shareId)}>
           <FileTextIcon className="mt-0.5 self-start text-muted-foreground group-data-active/menu-button:text-foreground" />
           <span className="flex min-w-0 flex-col">
             <span className="flex items-center gap-1.5">

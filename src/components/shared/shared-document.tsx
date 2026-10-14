@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { createDoc, db } from "@/lib/db"
-import { sharePath } from "@/lib/share/protocol"
+import { docPath, sharePath } from "@/lib/share/protocol"
 import { contactEmail, privacyPolicy, siteUrl } from "@/lib/site"
 
 // the preview sanitizes with DOMPurify, which needs the browser's DOM
@@ -131,7 +131,7 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
         )}
         {originalId ? (
           <Button size="sm" asChild>
-            <Link href={`/d/${originalId}`}>
+            <Link href={docPath(originalId, id)}>
               <PencilIcon />
               Edit
             </Link>

@@ -36,6 +36,17 @@ export function sharePath(id: string, title: string): string {
   return `/s/${slug ? `${slug}-` : ""}${id}`
 }
 
+/** Query parameter that names a published document's public id in its editor URL. */
+export const SHARE_PARAM = "share"
+
+/**
+ * Editor path of a document. Documents live in one browser, so a published one also
+ * names its public id: in any other browser, the editor sends the link on to the public copy.
+ */
+export function docPath(docId: string, shareId?: string): string {
+  return `/d/${docId}${shareId ? `?${SHARE_PARAM}=${shareId}` : ""}`
+}
+
 /** The share id that ends a /s/ path segment, with or without a slug in front, or null. */
 export function shareIdFromSegment(segment: string): string | null {
   const id = segment.slice(-SHARE_ID_LENGTH)

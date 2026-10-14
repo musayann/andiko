@@ -8,6 +8,8 @@ import { isSyncFailing, subscribeSyncFailing } from "@/lib/share/scheduler"
 export type ShareSyncState = "synced" | "syncing" | "failing"
 
 export interface ShareStatus {
+  /** False until the document has been read; `shareId` is unknown until then. */
+  loaded: boolean
   /** Set while the document is published. */
   shareId?: string
   sync: ShareSyncState
@@ -20,5 +22,5 @@ export function useShareStatus(docId: string): ShareStatus {
     return { shareId: doc?.shareId, pending: doc !== undefined && needsSync(doc) }
   }, [docId])
   const failing = useSyncExternalStore(subscribeSyncFailing, isSyncFailing, () => false)
-  return { shareId: doc?.shareId, sync: !doc?.pending ? "synced" : failing ? "failing" : "syncing" }
+  return { loaded: doc !== undefined, shareId: doc?.shareId, sync:!doc?.pending ? "synced" : failing ? "failing" : "syncing" }
 }

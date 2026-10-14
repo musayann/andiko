@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { shareIdFromSegment, sharePath, titleSlug } from "./protocol"
+import { docPath, shareIdFromSegment, sharePath, titleSlug } from "./protocol"
 
 const ID = "gJeMsfVwk0h-"
 
@@ -28,6 +28,16 @@ describe("sharePath", () => {
 
   it("is the bare id when the title has no usable characters", () => {
     expect(sharePath(ID, "会议记录")).toBe(`/s/${ID}`)
+  })
+})
+
+describe("docPath", () => {
+  it("is the bare editor path while unpublished", () => {
+    expect(docPath("abcdefghij")).toBe("/d/abcdefghij")
+  })
+
+  it("names the public id once published", () => {
+    expect(docPath("abcdefghij", ID)).toBe(`/d/abcdefghij?share=${ID}`)
   })
 })
 
