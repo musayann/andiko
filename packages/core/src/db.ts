@@ -94,18 +94,37 @@ export async function createDoc(content = "", folderId?: string, fileName?: stri
   return db.docs.add(newDoc(content, folderId, fileName))
 }
 
-/** Saves new content and, when given, the editor history that leads up to it. */
+// Documents opened in a new tab but not stored yet: each is added on its first
+// save, so a tab closed untouched leaves nothing behind. In memory only, so the
+// tab of an untouched draft is dropped on restart (its document is missing).
+const drafts = new Set<string>()
+
+/** Reserves the id of a new, empty document that is only stored once it is edited. */
+export function createDraft(): string {
+  const id = nanoid(10)
+  drafts.add(id)
+  return id
+}
+
+export const isDraft = (id: string) => drafts.has(id)
+
+/** Saves new content and, when given, the editor history that leads up to it. Stores a draft on its first save. */
 export async function saveDocContent(id: string, content: string, history?: unknown) {
   await db.transaction("rw", db.docs, db.history, async () => {
     const updatedAt = Date.now()
-    const updated = await db.docs.update(id, (doc) => {
+    let saved = await db.docs.update(id, (doc) => {
       doc.content = content
       doc.title = getDocTitle(content, doc.fileName)
       doc.updatedAt = updatedAt
     })
+    if (!saved && drafts.has(id)) {
+      await db.docs.add({ ...newDoc(content), id, createdAt: updatedAt, updatedAt })
+      saved = 1
+    }
     // a document deleted meanwhile gets no orphaned history
-    if (updated && history !== undefined) await db.history.put({ id, history, updatedAt })
+    if (saved && history !== undefined) await db.history.put({ id, history, updatedAt })
   })
+  drafts.delete(id)
 }
 
 /** A document and its editor history, read together so they match. */

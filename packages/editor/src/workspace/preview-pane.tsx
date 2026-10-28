@@ -11,6 +11,7 @@ import { copyCodeBlock, enhancePreview, patchPreview } from "@andiko/core/previe
 import { useTheme } from "@andiko/ui/hooks/use-theme"
 import { cn } from "@andiko/ui/lib/utils"
 
+import { SEPARATOR, showContextMenu } from "../desktop/context-menu"
 import { openLink } from "../desktop/links"
 import { DocumentToc } from "./document-toc"
 
@@ -41,6 +42,17 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
     onRendered?.()
   }, [html, resolvedTheme, onRendered])
 
+  const followLink = (link: HTMLAnchorElement) => {
+    const href = link.getAttribute("href") ?? ""
+    if (href.startsWith("#")) {
+      const id = decodeURIComponent(href.slice(1))
+      articleRef.current?.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth" })
+    } else {
+      // never navigate the editor away; links open in a new tab, or the desktop app's tabs for Andiko's own
+      void openLink(link.href)
+    }
+  }
+
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement
 
@@ -63,14 +75,36 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
     const link = target.closest<HTMLAnchorElement>("a[href]")
     if (!link) return
     event.preventDefault()
-    const href = link.getAttribute("href") ?? ""
-    if (href.startsWith("#")) {
-      const id = decodeURIComponent(href.slice(1))
-      articleRef.current?.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth" })
-    } else {
-      // never navigate the editor away; links open in a new tab, or the desktop app's tabs for Andiko's own
-      void openLink(link.href)
-    }
+    followLink(link)
+  }
+
+  const handleContextMenu = (event: MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement
+    const link = target.closest<HTMLAnchorElement>("a[href]")
+    // in-page anchors have no address worth copying
+    const linkAddress = link && !link.getAttribute("href")?.startsWith("#") ? link.href : undefined
+    const copyButton = target.closest(".code-block")?.querySelector<HTMLElement>(":scope > .copy-button")
+
+    showContextMenu(event, [
+      link && { text: "Open link", action: () => followLink(link) },
+      linkAddress !== undefined && {
+        text: "Copy link",
+        action: () =>
+          navigator.clipboard.writeText(linkAddress).then(
+            () => toast.success("Link copied"),
+            () => toast.error("Could not copy to clipboard"),
+          ),
+      },
+      link && SEPARATOR,
+      copyButton && {
+        text: "Copy code",
+        action: () => copyCodeBlock(copyButton).catch(() => toast.error("Could not copy to clipboard")),
+      },
+      copyButton && SEPARATOR,
+      { item: "Copy" },
+      // the article's text, not the whole window's
+      { text: "Select all", action: () => articleRef.current && getSelection()?.selectAllChildren(articleRef.current) },
+    ])
   }
 
   return (
@@ -91,7 +125,12 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
               ))}
             </div>
           )}
-          <article ref={articleRef} className="markdown-body" onClick={handleClick} />
+          <article
+            ref={articleRef}
+            className="markdown-body"
+            onClick={handleClick}
+            onContextMenu={handleContextMenu}
+          />
         </div>
         {showToc && <DocumentToc headings={headings} scrollRef={scrollRef} articleRef={articleRef} />}
       </div>

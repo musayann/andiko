@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { getDocWithHistory, saveDocContent, setLastDocId } from "../db"
+import { getDocWithHistory, isDraft, saveDocContent, setLastDocId } from "../db"
 
 // no "saving" state: IndexedDB writes are quick enough that showing one only flickers
 export type SaveState = "saved" | "unsaved"
@@ -65,7 +65,8 @@ export function useDoc(id: string) {
     getDocWithHistory(id).then(({ doc, history: stored }) => {
       if (cancelled) return
       if (!doc) {
-        setLoad({ status: "missing" })
+        // a new tab's document is only stored once it is edited
+        setLoad(isDraft(id) ? { status: "ready", initialContent: "" } : { status: "missing" })
         return
       }
       let content = doc.content
@@ -106,9 +107,11 @@ export function useDoc(id: string) {
       pending.current = { content: value, history }
       setSaveState("unsaved")
       clearTimeout(timer.current)
-      timer.current = setTimeout(flush, SAVE_DELAY)
+      // a draft is stored on its first edit right away, so it exists before the page could
+      // unload: the backup alone can't bring back a tab whose document is missing
+      timer.current = setTimeout(flush, isDraft(id) ? 0 : SAVE_DELAY)
     },
-    [flush],
+    [id, flush],
   )
 
   useEffect(() => {

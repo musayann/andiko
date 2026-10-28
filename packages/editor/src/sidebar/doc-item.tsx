@@ -15,8 +15,9 @@ import {
 } from "@andiko/ui/components/dropdown-menu"
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@andiko/ui/components/sidebar"
 
+import { SEPARATOR, showContextMenu } from "../desktop/context-menu"
 import { useDocNav } from "../hooks/use-doc-nav"
-import { MoveToMenu } from "./move-to-menu"
+import { MoveToMenu, moveToSubmenu } from "./move-to-menu"
 import { useDragSource, useSidebarTree } from "./tree-context"
 
 const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
@@ -48,7 +49,22 @@ export function DocItem({ doc, path }: { doc: DocSummary; path?: string }) {
   const drag = useDragSource({ kind: "doc", id: doc.id, parentId: doc.folderId })
 
   return (
-    <SidebarMenuItem {...drag}>
+    <SidebarMenuItem
+      {...drag}
+      // the ⋯ menu's actions, on right-click
+      onContextMenu={(event) =>
+        showContextMenu(event, [
+          { text: "Open", action: () => nav.open(doc.id) },
+          SEPARATOR,
+          { text: "Duplicate", action: () => tree.onDuplicateDoc(doc) },
+          { text: "Download .md", action: () => tree.onDownloadDoc(doc) },
+          !!doc.shareId && { text: "Copy public link", action: () => tree.onCopyDocLink(doc) },
+          moveToSubmenu(tree, { kind: "doc", id: doc.id, parentId: doc.folderId }),
+          SEPARATOR,
+          { text: "Delete", action: () => tree.onDeleteDoc(doc) },
+        ])
+      }
+    >
       <SidebarMenuButton asChild isActive={doc.id === tree.activeId} className={DOC_BUTTON}>
         <Link
           href={docPath(doc.id, doc.shareId)}

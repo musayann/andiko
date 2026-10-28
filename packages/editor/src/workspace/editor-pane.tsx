@@ -13,6 +13,8 @@ import { useCallback, useMemo } from "react"
 import { historyToJSON, restoreState } from "@andiko/core/editor-history"
 import { formatKeymap } from "@andiko/core/formatting"
 
+import { editorContextMenu } from "./editor-context-menu"
+
 // The editor is always dark, even though the rest of the app is light
 const editorTheme = EditorView.theme(
   {
@@ -78,6 +80,7 @@ const extensions = [
   formatKeymap,
   // CodeMirror redoes with Ctrl+Y on Windows; this makes the Ctrl+Shift+Z shown on the redo button work there too
   keymap.of([{ key: "Mod-Shift-z", run: redo, preventDefault: true }]),
+  editorContextMenu,
 ]
 
 interface EditorPaneProps {

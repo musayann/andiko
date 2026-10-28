@@ -4,7 +4,7 @@ import { LoaderCircleIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { createDoc, db, resolveStartDoc } from "@andiko/core/db"
+import { createDraft, db, resolveStartDoc } from "@andiko/core/db"
 import { printDocument } from "@andiko/core/export"
 import { parseAndikoLink } from "@andiko/core/share/public"
 import {
@@ -35,8 +35,8 @@ async function restoreTabs() {
   if (getTabs().tabs.length === 0) openDocTab(await resolveStartDoc())
 }
 
-async function newDocumentTab() {
-  openDocTab(await createDoc(""))
+function newDocumentTab() {
+  openDocTab(createDraft())
 }
 
 async function printActiveDocument() {
@@ -56,7 +56,7 @@ function useMenuEvents(onOpenLink: () => void) {
     const handle = (id: string) => {
       const select = SELECT_TAB.exec(id)
       if (select) selectTabNumber(Number(select[1]))
-      else if (id === "new-tab") void newDocumentTab()
+      else if (id === "new-tab") newDocumentTab()
       else if (id === "open-link") onOpenLink()
       else if (id === "close-tab") {
         const { active } = getTabs()
@@ -105,6 +105,46 @@ function useExternalLinks() {
   }, [])
 }
 
+/**
+ * Keeps a file dragged in from Finder from loading in the webview. Tauri's own drop handling is off
+ * (dragDropEnabled in src-tauri/tauri.conf.json) so the sidebar and tab bar can drag, which leaves
+ * file drops to WebKit; only the editor takes them, reading the file's text in.
+ */
+function useFileDropGuard() {
+  useEffect(() => {
+    const onDrag = (event: DragEvent) => {
+      if (event.defaultPrevented || !event.dataTransfer?.types.includes("Files")) return
+      if (event.target instanceof HTMLElement && event.target.isContentEditable) return
+      event.preventDefault()
+      event.dataTransfer.dropEffect = "none"
+    }
+    window.addEventListener("dragover", onDrag)
+    window.addEventListener("drop", onDrag)
+    return () => {
+      window.removeEventListener("dragover", onDrag)
+      window.removeEventListener("drop", onDrag)
+    }
+  }, [])
+}
+
+/**
+ * Keeps the webview's own menu (Reload, Inspect Element…) from showing on right-click. Places with
+ * app actions show a native menu instead (see context-menu.ts); text fields keep their Cut/Copy/Paste.
+ */
+function useContextMenuGuard() {
+  useEffect(() => {
+    const onContextMenu = (event: MouseEvent) => {
+      if (event.defaultPrevented) return
+      if (event.target instanceof Element && event.target.closest("input, textarea")) return
+      // Shift+right-click still reaches Inspect Element while developing
+      if (process.env.NODE_ENV === "development" && event.shiftKey) return
+      event.preventDefault()
+    }
+    window.addEventListener("contextmenu", onContextMenu)
+    return () => window.removeEventListener("contextmenu", onContextMenu)
+  }, [])
+}
+
 /** Opens the andiko:// links the system hands the app (the scheme is registered in src-tauri/tauri.conf.json). */
 function openDeepLinks(urls: string[] | null) {
   for (const url of urls ?? []) {
@@ -145,6 +185,8 @@ export function DesktopShell() {
 
   useMenuEvents(openLinkDialog)
   useExternalLinks()
+  useFileDropGuard()
+  useContextMenuGuard()
   useDeepLinks()
 
   useEffect(() => {
@@ -158,7 +200,7 @@ export function DesktopShell() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <TabBar tabs={tabs} active={active} onNew={() => void newDocumentTab()} onOpenLink={openLinkDialog} />
+      <TabBar tabs={tabs} active={active} onNew={newDocumentTab} onOpenLink={openLinkDialog} />
       <div className="min-h-0 flex-1">
         {/* keyed so switching tabs remounts the editor with fresh state, as switching routes does on the web */}
         {tab?.kind === "doc" && <Workspace key={tabKey(tab)} id={tab.docId} sharing />}

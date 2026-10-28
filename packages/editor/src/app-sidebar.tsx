@@ -74,6 +74,7 @@ import { ThemeSwitcher } from "@andiko/ui/components/theme-switcher"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"
 import { cn } from "@andiko/ui/lib/utils"
 
+import { showContextMenu } from "./desktop/context-menu"
 import { useTrafficLights } from "./desktop/traffic-lights"
 import { useDocNav } from "./hooks/use-doc-nav"
 import { DocItem } from "./sidebar/doc-item"
@@ -543,9 +544,9 @@ export function AppSidebar() {
   )
 }
 
-/** The document list; areas outside any folder are the drop zone for the top level. */
+/** The document list; areas outside any folder are the drop zone for the top level, and right-click there to add to it. */
 function DocumentsGroup({ droppable, children }: { droppable: boolean; children: ReactNode }) {
-  const { setHovered } = useSidebarTree()
+  const { setHovered, onNewDoc, onNewFolder, onImportInto } = useSidebarTree()
   const drop = useDropTarget(undefined)
 
   return (
@@ -554,6 +555,15 @@ function DocumentsGroup({ droppable, children }: { droppable: boolean; children:
       {...(droppable ? drop.props : {})}
       onDragLeave={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHovered(null)
+      }}
+      onContextMenu={(event) => {
+        // a document or folder row showed its own menu
+        if (event.defaultPrevented) return
+        showContextMenu(event, [
+          { text: "New document", action: () => onNewDoc() },
+          { text: "New folder", action: () => onNewFolder() },
+          { text: "Import files…", action: () => onImportInto() },
+        ])
       }}
     >
       {children}

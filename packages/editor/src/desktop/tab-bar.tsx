@@ -2,15 +2,25 @@
 
 import { useLiveQuery } from "dexie-react-hooks"
 import { FileTextIcon, GlobeIcon, LinkIcon, PlusIcon, XIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, type MouseEvent } from "react"
 
 import { db } from "@andiko/core/db"
-import { activateTab, closeTab, moveTab, tabKey, type Tab, type TabsState } from "@andiko/core/tabs"
+import {
+  activateTab,
+  closeTab,
+  closeTabs,
+  getTabs,
+  moveTab,
+  tabKey,
+  type Tab,
+  type TabsState,
+} from "@andiko/core/tabs"
 import { Button } from "@andiko/ui/components/button"
 import { useSidebar } from "@andiko/ui/components/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"
 import { cn } from "@andiko/ui/lib/utils"
 
+import { SEPARATOR, showContextMenu } from "./context-menu"
 import { useTrafficLights } from "./traffic-lights"
 
 /** The tab's label: a document's title, or a public document's once it has been fetched. */
@@ -33,12 +43,33 @@ interface TabItemProps {
   onDragStart: (index: number) => void
   onDragOver: (index: number | null) => void
   onDrop: (index: number) => void
+  onNew: () => void
 }
 
-function TabItem({ tab, index, active, dragOver, onDragStart, onDragOver, onDrop }: TabItemProps) {
+function TabItem({ tab, index, active, dragOver, onDragStart, onDragOver, onDrop, onNew }: TabItemProps) {
   const key = tabKey(tab)
   const title = useTabTitle(tab) ?? (tab.kind === "doc" ? "Untitled" : "Shared document")
   const Icon = tab.kind === "doc" ? FileTextIcon : GlobeIcon
+
+  const showMenu = (event: MouseEvent) => {
+    const { tabs } = getTabs()
+    const toTheRight = new Set(tabs.slice(index + 1).map(tabKey))
+    showContextMenu(event, [
+      { text: "New document", accelerator: "CmdOrCtrl+T", action: onNew },
+      SEPARATOR,
+      { text: "Close tab", action: () => closeTab(key) },
+      {
+        text: "Close other tabs",
+        enabled: tabs.length > 1,
+        action: () => closeTabs((candidate) => tabKey(candidate) !== key),
+      },
+      {
+        text: "Close tabs to the right",
+        enabled: toTheRight.size > 0,
+        action: () => closeTabs((candidate) => toTheRight.has(tabKey(candidate))),
+      },
+    ])
+  }
 
   return (
     <div
@@ -55,6 +86,7 @@ function TabItem({ tab, index, active, dragOver, onDragStart, onDragOver, onDrop
       onAuxClick={(event) => {
         if (event.button === 1) closeTab(key)
       }}
+      onContextMenu={showMenu}
       onDragStart={() => onDragStart(index)}
       onDragOver={(event) => {
         event.preventDefault()
@@ -118,6 +150,14 @@ export function TabBar({ tabs, active, onNew, onOpenLink }: TabBarProps) {
         clearTrafficLights && "pl-22",
       )}
       onDragEnd={endDrag}
+      onContextMenu={(event) => {
+        // a tab showed its own menu
+        if (event.defaultPrevented) return
+        showContextMenu(event, [
+          { text: "New document", accelerator: "CmdOrCtrl+T", action: onNew },
+          { text: "Open shared link…", accelerator: "CmdOrCtrl+L", action: onOpenLink },
+        ])
+      }}
     >
       {/* the scroller clips at its edges, so pad it to keep the outer tabs' rings in view (the negative margin keeps them in place) */}
       <div
@@ -138,6 +178,7 @@ export function TabBar({ tabs, active, onNew, onOpenLink }: TabBarProps) {
               if (dragFrom !== null) moveTab(dragFrom, to)
               endDrag()
             }}
+            onNew={onNew}
           />
         ))}
       </div>

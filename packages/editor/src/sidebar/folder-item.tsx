@@ -26,8 +26,9 @@ import {
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuSub } from "@andiko/ui/components/sidebar"
 import { cn } from "@andiko/ui/lib/utils"
 
+import { SEPARATOR, showContextMenu } from "../desktop/context-menu"
 import { DocItem } from "./doc-item"
-import { MoveToMenu } from "./move-to-menu"
+import { MoveToMenu, moveToSubmenu } from "./move-to-menu"
 import { useDragSource, useDropTarget, useSidebarTree } from "./tree-context"
 
 // while dragging, resting on a closed folder opens it so its subfolders become reachable
@@ -55,8 +56,26 @@ export function FolderItem({ node }: { node: FolderNode<DocSummary> }) {
         className={cn("relative rounded-lg", drop.highlight && "bg-sidebar-accent ring-1 ring-sidebar-ring/40")}
         {...drop.props}
       >
-        {/* own hover group, so hovering the folder's contents doesn't reveal this row's ⋯ button */}
-        <div className="group/menu-item relative" {...drag}>
+        {/* own hover group, so hovering the folder's contents doesn't reveal this row's ⋯ button.
+            Right-clicking the row shows the ⋯ menu's actions; the contents have their own */}
+        <div
+          className="group/menu-item relative"
+          {...drag}
+          onContextMenu={(event) =>
+            showContextMenu(event, [
+              { text: "New document", action: () => tree.onNewDoc(folder.id) },
+              { text: "New folder", action: () => tree.onNewFolder(folder.id) },
+              SEPARATOR,
+              { text: "Rename", action: () => tree.onRenameFolder(folder) },
+              moveToSubmenu(tree, { kind: "folder", id: folder.id, parentId: folder.parentId }),
+              SEPARATOR,
+              { text: "Import files here…", action: () => tree.onImportInto(folder.id) },
+              { text: "Export as .zip", action: () => tree.onExportFolder(node) },
+              SEPARATOR,
+              { text: "Delete", action: () => tree.onDeleteFolder(node) },
+            ])
+          }
+        >
           <CollapsibleTrigger asChild>
             <SidebarMenuButton className="gap-1.5 rounded-lg">
               <ChevronRightIcon className="text-muted-foreground transition-transform group-data-open/menu-button:rotate-90" />

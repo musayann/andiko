@@ -1,6 +1,6 @@
 import { toast } from "sonner"
 
-import { clearDocShare, db, markDocSynced, needsSync, setDocShare, type Doc } from "../db"
+import { clearDocShare, db, isDraft, markDocSynced, needsSync, setDocShare, type Doc } from "../db"
 import { API_BASE, IS_DESKTOP_BUILD } from "../platform"
 import { contactEmail, siteUrl } from "../site"
 import { MAX_SHARE_BYTES, sharePath, utf8Length } from "./protocol"
@@ -57,7 +57,7 @@ async function errorMessage(response: Response, fallback: string): Promise<strin
 export function publishDoc(docId: string): Promise<string> {
   return withSyncLock(async () => {
     const doc = await db.docs.get(docId)
-    if (!doc) throw new Error("Document not found")
+    if (!doc) throw new Error(isDraft(docId) ? "Write something before publishing." : "Document not found")
     if (doc.shareId) return doc.shareId
     if (utf8Length(doc.content) > MAX_SHARE_BYTES) throw new Error(TOO_LARGE)
 
