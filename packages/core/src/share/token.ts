@@ -1,9 +1,10 @@
+import { getSetting, setSetting } from "../db"
 import { TOKEN_PATTERN } from "./protocol"
 
 // The owner token proves that this browser published a document: the server
 // keeps only its hash and accepts changes from requests that carry it. There is
 // no account, so losing it (clearing site data) means the published copies can
-// no longer be updated from here.
+// no longer be updated from here. The desktop app keeps it with the documents.
 const TOKEN_KEY = "andiko:owner-token"
 
 function newToken(): string {
@@ -17,11 +18,11 @@ function newToken(): string {
 /** This browser's owner token, created on first use. Null when storage is unavailable. */
 export function getOwnerToken(): string | null {
   try {
-    let token = localStorage.getItem(TOKEN_KEY)
+    let token = getSetting(TOKEN_KEY)
     // a malformed token can't have published anything, so replacing it loses nothing
     if (!token || !TOKEN_PATTERN.test(token)) {
       token = newToken()
-      localStorage.setItem(TOKEN_KEY, token)
+      setSetting(TOKEN_KEY, token)
     }
     return token
   } catch {

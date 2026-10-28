@@ -1,4 +1,4 @@
-import { db, type PublicCopy } from "../db"
+import { deletePublicCopy, getPublicCopy, putPublicCopy, type PublicCopy } from "../db"
 import { API_BASE, APP_SCHEME } from "../platform"
 import { siteUrl } from "../site"
 import { isShareId, SHARE_PARAM, shareIdFromSegment } from "./protocol"
@@ -16,17 +16,17 @@ export type PublicLoad =
   | { status: "unavailable" }
 
 export async function loadPublicCopy(shareId: string): Promise<PublicLoad> {
-  const cached = await db.publicCopies.get(shareId).catch(() => undefined)
+  const cached = await getPublicCopy(shareId).catch(() => undefined)
   try {
     const response = await fetch(`${API_BASE}/api/shares/${shareId}`)
     if (response.status === 404) {
-      await db.publicCopies.delete(shareId).catch(() => undefined)
+      await deletePublicCopy(shareId).catch(() => undefined)
       return { status: "missing" }
     }
     if (!response.ok) throw new Error(String(response.status))
     const body = (await response.json()) as Pick<PublicCopy, "id" | "title" | "content" | "updatedAt">
     const copy: PublicCopy = { ...body, fetchedAt: Date.now() }
-    await db.publicCopies.put(copy).catch(() => undefined)
+    await putPublicCopy(copy).catch(() => undefined)
     return { status: "ok", copy, offline: false }
   } catch {
     return cached ? { status: "ok", copy: cached, offline: true } : { status: "unavailable" }

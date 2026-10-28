@@ -1,7 +1,6 @@
-import { useLiveQuery } from "dexie-react-hooks"
 import { useSyncExternalStore } from "react"
 
-import { db, needsSync } from "../db"
+import { getDoc, needsSync, useLiveQuery } from "../db"
 import { isSyncFailing, subscribeSyncFailing } from "../share/scheduler"
 
 /** "failing": the public copy is behind and the last push didn't get through; it keeps retrying. */
@@ -18,7 +17,7 @@ export interface ShareStatus {
 /** Whether a document is published, and whether its public copy has the latest saved edits. */
 export function useShareStatus(docId: string): ShareStatus {
   const doc = useLiveQuery(async () => {
-    const doc = await db.docs.get(docId)
+    const doc = await getDoc(docId)
     return { shareId: doc?.shareId, pending: doc !== undefined && needsSync(doc) }
   }, [docId])
   const failing = useSyncExternalStore(subscribeSyncFailing, isSyncFailing, () => false)

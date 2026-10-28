@@ -4,7 +4,7 @@ import { LoaderCircleIcon } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { createDraft, db, resolveStartDoc } from "@andiko/core/db"
+import { createDraft, getDoc, getDocs, resolveStartDoc } from "@andiko/core/db"
 import { printDocument } from "@andiko/core/export"
 import { parseAndikoLink } from "@andiko/core/share/public"
 import {
@@ -30,7 +30,7 @@ const SELECT_TAB = /^select-tab-([1-9])$/
 /** Opens the document tabs from last time, dropping those whose document is gone; a first run gets the start document. */
 async function restoreTabs() {
   const docIds = getTabs().tabs.flatMap((tab) => (tab.kind === "doc" ? [tab.docId] : []))
-  const found = new Set((await db.docs.bulkGet(docIds)).flatMap((doc) => (doc ? [doc.id] : [])))
+  const found = new Set((await getDocs(docIds)).flatMap((doc) => (doc ? [doc.id] : [])))
   closeTabs((tab) => tab.kind === "doc" && !found.has(tab.docId))
   if (getTabs().tabs.length === 0) openDocTab(await resolveStartDoc())
 }
@@ -43,7 +43,7 @@ async function printActiveDocument() {
   const { tabs, active } = getTabs()
   const tab = tabs.find((candidate) => tabKey(candidate) === active)
   if (tab?.kind !== "doc") return
-  const doc = await db.docs.get(tab.docId)
+  const doc = await getDoc(tab.docId)
   if (doc) await printDocument(doc.content)
 }
 

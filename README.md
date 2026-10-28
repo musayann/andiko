@@ -14,7 +14,7 @@ A local-first Markdown editor with live preview and PDF export, on the web and a
   - footnotes, definition lists, abbreviations, `==mark==`, `++ins++`, `~sub~`, `^sup^` and emoji shortcodes
   - YAML front matter (`title`, `tags`, `breaks`)
 - **PDF export**: a real download rendered by headless Chrome on the server, with selectable text, embedded fonts and page numbers. Browser printing is available as a fallback.
-- **Local-first**: documents live in the browser (IndexedDB). You can import and download `.md` files. There is no account, and only documents you share are stored on the server.
+- **Local-first**: documents live in the browser (IndexedDB), or in the Mac app, in a database on the Mac. You can import and download `.md` files. There is no account, and only documents you share are stored on the server.
 - **Sharing**: Share publishes a read-only link at `/s/<title>-<id>`. Only the id identifies the document: links made before a title change, or with a bare id, redirect to the current title. Your later edits sync to it automatically, and only your browser can edit or unpublish it (the instance's operator can still remove it). Visitors can save their own editable copy, which never touches the original.
 - **Folders (optional)**: group documents in nested folders. Move them with the ⋯ menu or by dragging in the sidebar. Documents without a folder stay at the top level, as before.
 
@@ -45,9 +45,11 @@ The repo is a pnpm workspace run by [Turborepo](https://turborepo.com). The root
 
 To run a task in one workspace, filter it, e.g. `pnpm --filter @andiko/core test`.
 
+The Mac app's SQLite store has Rust tests: `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`.
+
 ## Mac app
 
-`apps/desktop` wraps the editor in [Tauri](https://tauri.app). Its frontend is a static export of the same components, loaded from disk, so documents stay on the Mac and editing works offline. Documents open in tabs (<kbd>⌘</kbd><kbd>T</kbd> new, <kbd>⌘</kbd><kbd>W</kbd> close, <kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd>, <kbd>⌘</kbd><kbd>L</kbd> opens a shared link in a tab). Links to the site in a document open in a tab too, and the app handles the `andiko://` scheme: `andiko://s/<slug>-<id>` opens what `https://andiko.app/s/<slug>-<id>` shows (macOS registers it when the app is installed, so it doesn't reach `pnpm dev:desktop`). Sharing and the PDF fallback call the website's API at `NEXT_PUBLIC_SITE_URL`; PDF export otherwise uses the system print dialog. Building it needs Rust (`cargo`).
+`apps/desktop` wraps the editor in [Tauri](https://tauri.app). Its frontend is a static export of the same components, loaded from disk, so documents stay on the Mac and editing works offline. They are kept in a SQLite database at `~/Library/Application Support/app.andiko.desktop/andiko.db`, where Time Machine backs them up, together with the open tabs and the key to your published documents (`pnpm dev:desktop` uses `andiko-dev.db` next to it). On first launch, the app moves in what earlier versions kept in WebKit's storage. Documents open in tabs (<kbd>⌘</kbd><kbd>T</kbd> new, <kbd>⌘</kbd><kbd>W</kbd> close, <kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd>, <kbd>⌘</kbd><kbd>L</kbd> opens a shared link in a tab). Links to the site in a document open in a tab too, and the app handles the `andiko://` scheme: `andiko://s/<slug>-<id>` opens what `https://andiko.app/s/<slug>-<id>` shows (macOS registers it when the app is installed, so it doesn't reach `pnpm dev:desktop`). Sharing and the PDF fallback call the website's API at `NEXT_PUBLIC_SITE_URL`; PDF export otherwise uses the system print dialog. Building it needs Rust (`cargo`).
 
 Every push to `main` builds a universal `.dmg` (Apple Silicon and Intel), attached as an artifact to the run of the [Desktop macOS build](.github/workflows/desktop-macos.yml) workflow in the Actions tab. It is ad-hoc signed, not notarized: on first launch, allow it in System Settings → Privacy & Security → Open Anyway (or run `xattr -dr com.apple.quarantine /Applications/Andiko.app`).
 
@@ -114,10 +116,10 @@ apps/
     public/welcome.md           feature showcase
   desktop/                      the Mac app
     src/app/page.tsx            sidebar and tabbed workspace (static export)
-    src-tauri/                  Tauri shell: window, native menu, print, plugins
+    src-tauri/                  Tauri shell: window, native menu, print, plugins, SQLite document store
 packages/
   core/src/                     framework-free logic, shared by both apps
-    db.ts                       Dexie (IndexedDB) storage
+    db.ts                       document storage: Dexie (IndexedDB) on the web, SQLite in the Mac app (store/)
     markdown/                   markdown-it setup and syntax plugins (fence, containers, TOC, source map)
     share/                      owner token, sync client, public copies, share link format
     hooks/                      autosave (use-doc), scroll sync, share status

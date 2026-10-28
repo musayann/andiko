@@ -1,21 +1,20 @@
 "use client"
 
-import { useLiveQuery } from "dexie-react-hooks"
 import { useEffect } from "react"
 
-import { db, needsSync } from "@andiko/core/db"
+import { docsToSync, useLiveQuery } from "@andiko/core/db"
 import { cancelSync, scheduleSync, syncNow } from "@andiko/core/share/scheduler"
 import { getOwnerToken } from "@andiko/core/share/token"
 
 /**
  * Pushes local edits of published documents to their public copies. Unsynced
- * edits are tracked in IndexedDB, so whatever doesn't make it out (offline, tab
- * closed) is pushed on the next visit. Renders nothing.
+ * edits are tracked with the documents, so whatever doesn't make it out (offline,
+ * tab closed) is pushed on the next visit. Renders nothing.
  */
 export function ShareSync() {
   // changes with every save of a published document that has unsynced edits
   const pending = useLiveQuery(async () => {
-    const docs = await db.docs.orderBy("shareId").filter(needsSync).toArray()
+    const docs = await docsToSync()
     return docs.map((doc) => `${doc.id}:${doc.updatedAt}`).join()
   }, [])
 
