@@ -51,6 +51,8 @@ To run a task in one workspace, filter it, e.g. `pnpm --filter @andiko/core test
 
 Every push to `main` builds a universal `.dmg` (Apple Silicon and Intel), attached as an artifact to the run of the [Desktop macOS build](.github/workflows/desktop-macos.yml) workflow in the Actions tab. It is ad-hoc signed, not notarized: on first launch, allow it in System Settings → Privacy & Security → Open Anyway (or run `xattr -dr com.apple.quarantine /Applications/Andiko.app`).
 
+The app icon is drawn in Icon Composer (`apps/desktop/src-tauri/icons/andiko.icon`), but builds use the `Assets.car` compiled from it next to it, because `actool` in some Xcode 26 releases crashes on `.icon` files. After changing the icon, run `pnpm --filter @andiko/desktop icon:car` and commit the new `Assets.car`.
+
 ## Deployment
 
 Canonical links, the sitemap, `robots.txt` and Open Graph images use `https://andiko.app`. If you self-host on another domain, set `NEXT_PUBLIC_SITE_URL` to its origin (e.g. `https://notes.example.com`).

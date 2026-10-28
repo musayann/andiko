@@ -12,7 +12,6 @@ concurrency:
 
 jobs:
   build:
-    # Xcode 26+: actool compiles icons/andiko.icon (older Xcode falls back to icon.icns)
     runs-on: macos-26
     timeout-minutes: 60
     steps:
