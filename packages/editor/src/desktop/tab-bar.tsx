@@ -7,8 +7,11 @@ import { useState } from "react"
 import { db } from "@andiko/core/db"
 import { activateTab, closeTab, moveTab, tabKey, type Tab, type TabsState } from "@andiko/core/tabs"
 import { Button } from "@andiko/ui/components/button"
+import { useSidebar } from "@andiko/ui/components/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"
 import { cn } from "@andiko/ui/lib/utils"
+
+import { useTrafficLights } from "./traffic-lights"
 
 /** The tab's label: a document's title, or a public document's once it has been fetched. */
 function useTabTitle(tab: Tab): string | undefined {
@@ -97,6 +100,9 @@ interface TabBarProps extends TabsState {
 export function TabBar({ tabs, active, onNew, onOpenLink }: TabBarProps) {
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
+  const { isMobile, state } = useSidebar()
+  // with no sidebar beside it, the tab bar reaches the window's corner, under the traffic lights
+  const clearTrafficLights = useTrafficLights() && (isMobile || state === "collapsed")
 
   const endDrag = () => {
     setDragFrom(null)
@@ -104,8 +110,21 @@ export function TabBar({ tabs, active, onNew, onOpenLink }: TabBarProps) {
   }
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-1 border-b bg-muted/40 px-2" onDragEnd={endDrag}>
-      <div role="tablist" aria-label="Open documents" className="flex min-w-0 items-center gap-1 overflow-x-auto py-1">
+    // it doubles as the title bar: its empty space drags the window (tabs and buttons stay clickable)
+    <div
+      data-tauri-drag-region="deep"
+      className={cn(
+        "flex h-11 shrink-0 items-center gap-1 border-b bg-muted/40 px-2 transition-[padding] duration-200 ease-linear",
+        clearTrafficLights && "pl-22",
+      )}
+      onDragEnd={endDrag}
+    >
+      {/* the scroller clips at its edges, so pad it to keep the outer tabs' rings in view (the negative margin keeps them in place) */}
+      <div
+        role="tablist"
+        aria-label="Open documents"
+        className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto p-1"
+      >
         {tabs.map((tab, index) => (
           <TabItem
             key={tabKey(tab)}

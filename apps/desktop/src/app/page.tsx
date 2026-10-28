@@ -12,6 +12,8 @@ export default function DesktopApp() {
         <DesktopShell />
       </SidebarInset>
       <ShareSync />
+      {/* the gutter along the window's top edge, above the sidebar's and tab bar's drag regions */}
+      <div data-tauri-drag-region className="fixed inset-x-0 top-0 z-20 h-2" />
     </SidebarProvider>
   )
 }

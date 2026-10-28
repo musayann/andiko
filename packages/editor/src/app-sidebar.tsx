@@ -74,6 +74,7 @@ import { ThemeSwitcher } from "@andiko/ui/components/theme-switcher"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"
 import { cn } from "@andiko/ui/lib/utils"
 
+import { useTrafficLights } from "./desktop/traffic-lights"
 import { useDocNav } from "./hooks/use-doc-nav"
 import { DocItem } from "./sidebar/doc-item"
 import { DeleteFolderDialog, FolderNameDialog, type FolderDeletion } from "./sidebar/folder-dialogs"
@@ -100,6 +101,7 @@ type NameDialog = { mode: "create"; parentId?: string; moveInto?: TreeItem } | {
 export function AppSidebar() {
   const nav = useDocNav()
   const activeId = nav.activeId
+  const trafficLights = useTrafficLights()
   const [query, setQuery] = useState("")
   const [pendingDelete, setPendingDelete] = useState<DocSummary | null>(null)
   const [pendingFolderDelete, setPendingFolderDelete] = useState<FolderNode<DocSummary> | null>(null)
@@ -355,6 +357,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="inset">
+      {/* the title bar's share of the sidebar: room for the traffic lights, which trafficLightPosition
+          (src-tauri/tauri.conf.json) centers on this row and the tab bar beside it, and a handle to drag the window by */}
+      {trafficLights && <div data-tauri-drag-region className="h-11 shrink-0" />}
       <SidebarHeader className="gap-3">
         <div className="flex items-center justify-between px-1 pt-1">
           <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
