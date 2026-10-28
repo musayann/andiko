@@ -1,0 +1,51 @@
+name: Desktop macOS build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# a newer push to main supersedes a build still running
+concurrency:
+  group: desktop-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Xcode 26+: actool compiles icons/andiko.icon (older Xcode falls back to icon.icns)
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      # version from package.json "packageManager"
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - run: pnpm install --frozen-lockfile
+
+      # beforeBuildCommand runs the Next.js static export first
+      - name: Build universal .dmg
+        run: pnpm --filter @andiko/desktop tauri build --target universal-apple-darwin --bundles dmg
+        env:
+          # ad-hoc signature: no Apple account needed, Gatekeeper asks once (Open Anyway)
+          APPLE_SIGNING_IDENTITY: "-"
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: andiko-macos-universal-${{ github.sha }}
+          path: apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
