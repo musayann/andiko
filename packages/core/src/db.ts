@@ -1,79 +1,50 @@
-import Dexie, { type EntityTable } from "dexie"
 import { nanoid } from "nanoid"
 
 import type { ImportFolder } from "./archive"
-import { canMoveFolder, descendantIds } from "./folders"
+import { IS_DESKTOP_BUILD, isTauri } from "./platform"
 import { RESUME_COOKIE } from "./site"
+import { indexedDbStore } from "./store/indexeddb"
+import type { Doc, Folder } from "./store/model"
+import { sqliteStore } from "./store/sqlite"
 import { getDocTitle } from "./title"
 
-export interface Doc {
-  id: string
-  title: string
-  content: string
-  /** Absent for documents outside any folder, which includes every document created before folders existed. */
-  folderId?: string
-  /** Name (without extension) of the file it was imported from; the title when the content has none. */
-  fileName?: string
-  /** Public id of the published copy at /s/{shareId}; absent while the document is private. */
-  shareId?: string
-  /** The `updatedAt` last pushed to the published copy; edits after it are still to sync. */
-  syncedAt?: number
-  createdAt: number
-  updatedAt: number
-}
+export type { Doc, DocHistory, Folder, PublicCopy } from "./store/model"
+export { needsSync } from "./store/model"
 
-/**
- * A document's undo/redo history. It lives in its own table, apart from
- * `docs`, so it stays in this browser: publishing and exports only read docs.
- */
-export interface DocHistory {
-  /** The document's id. */
-  id: string
-  /** The editor's serialized history; opaque outside the editor. */
-  history: unknown
-  /** The document's `updatedAt` it was saved with; any other value means it belongs to other content. */
-  updatedAt: number
-}
+// On the web, documents stay in this browser's IndexedDB. The desktop app keeps them in a
+// SQLite file in Application Support, where Time Machine backs them up. Its dev server
+// opened in a plain browser has no Tauri to reach the file, so it uses IndexedDB too.
+const store = IS_DESKTOP_BUILD && isTauri() ? sqliteStore : indexedDbStore
 
-/** A public document fetched by the desktop app, kept so it still opens offline. */
-export interface PublicCopy {
-  /** The public id. */
-  id: string
-  title: string
-  content: string
-  /** When the server last changed it. */
-  updatedAt: string
-  fetchedAt: number
-}
+/** Gets the documents ready; the desktop app reads them in before showing anything. */
+export const openStore = () => store.open()
 
-export interface Folder {
-  id: string
-  name: string
-  /** Absent for top-level folders. */
-  parentId?: string
-  createdAt: number
-  updatedAt: number
-}
+/** Re-runs `querier` whenever the documents change; undefined until its first result. */
+export const useLiveQuery = store.useLiveQuery
 
-const db = new Dexie("andiko") as Dexie & {
-  docs: EntityTable<Doc, "id">
-  folders: EntityTable<Folder, "id">
-  history: EntityTable<DocHistory, "id">
-  publicCopies: EntityTable<PublicCopy, "id">
-}
-
-db.version(1).stores({ docs: "id, updatedAt" })
-// additive only: existing docs have no folderId and simply stay at the top level
-db.version(2).stores({ docs: "id, updatedAt, folderId", folders: "id, parentId" })
-// fileName is not indexed, so it needs no new version
-// additive only: documents without shareId are simply not published
-db.version(3).stores({ docs: "id, updatedAt, folderId, shareId" })
-// additive only: documents without a history row start with an empty one
-db.version(4).stores({ history: "id" })
-// additive only: offline cache of public documents opened in the desktop app
-db.version(5).stores({ publicCopies: "id" })
-
-export { db }
+// the store's methods don't use `this`, so they can be handed out on their own
+export const {
+  getSetting,
+  setSetting,
+  getDoc,
+  getDocs,
+  listDocs,
+  getDocsInFolders,
+  docsToSync,
+  findDocByShareId,
+  getDocWithHistory,
+  listFolders,
+  getPublicCopy,
+  deleteDoc,
+  moveDoc,
+  setDocShare,
+  markDocSynced,
+  clearDocShare,
+  renameFolder,
+  moveFolder,
+  putPublicCopy,
+  deletePublicCopy,
+} = store
 
 const LAST_DOC_KEY = "andiko:last-doc"
 
@@ -91,7 +62,9 @@ function newDoc(content: string, folderId?: string, fileName?: string): Doc {
 }
 
 export async function createDoc(content = "", folderId?: string, fileName?: string): Promise<string> {
-  return db.docs.add(newDoc(content, folderId, fileName))
+  const doc = newDoc(content, folderId, fileName)
+  await store.addDoc(doc)
+  return doc.id
 }
 
 // Documents opened in a new tab but not stored yet: each is added on its first
@@ -110,112 +83,28 @@ export const isDraft = (id: string) => drafts.has(id)
 
 /** Saves new content and, when given, the editor history that leads up to it. Stores a draft on its first save. */
 export async function saveDocContent(id: string, content: string, history?: unknown) {
-  await db.transaction("rw", db.docs, db.history, async () => {
-    const updatedAt = Date.now()
-    let saved = await db.docs.update(id, (doc) => {
-      doc.content = content
-      doc.title = getDocTitle(content, doc.fileName)
-      doc.updatedAt = updatedAt
-    })
-    if (!saved && drafts.has(id)) {
-      await db.docs.add({ ...newDoc(content), id, createdAt: updatedAt, updatedAt })
-      saved = 1
-    }
-    // a document deleted meanwhile gets no orphaned history
-    if (saved && history !== undefined) await db.history.put({ id, history, updatedAt })
-  })
+  await store.saveDocContent(id, content, history, drafts.has(id) ? { ...newDoc(content), id } : undefined)
   drafts.delete(id)
 }
 
-/** A document and its editor history, read together so they match. */
-export async function getDocWithHistory(id: string): Promise<{ doc?: Doc; history?: DocHistory }> {
-  return db.transaction("r", db.docs, db.history, async () => {
-    const [doc, history] = await Promise.all([db.docs.get(id), db.history.get(id)])
-    return { doc, history }
-  })
-}
-
 export async function duplicateDoc(id: string): Promise<string | undefined> {
-  const doc = await db.docs.get(id)
+  const doc = await getDoc(id)
   return doc ? createDoc(doc.content, doc.folderId, doc.fileName) : undefined
-}
-
-export async function deleteDoc(id: string) {
-  await db.transaction("rw", db.docs, db.history, async () => {
-    await db.docs.delete(id)
-    await db.history.delete(id)
-  })
-}
-
-// Dexie deletes a property that is updated to undefined, so moving to the top
-// level removes folderId/parentId instead of storing an unindexable null.
-
-/** Moves a document into a folder, or to the top level. Leaves updatedAt alone: it tracks content edits. */
-export async function moveDoc(id: string, folderId?: string) {
-  await db.docs.update(id, { folderId })
-}
-
-/** True when a published document has edits its public copy doesn't have yet. */
-export const needsSync = (doc: Doc) => doc.shareId !== undefined && doc.updatedAt > (doc.syncedAt ?? 0)
-
-export async function setDocShare(id: string, shareId: string, syncedAt: number) {
-  await db.docs.update(id, { shareId, syncedAt })
-}
-
-/** Records a push of the version saved at `updatedAt`, unless the document was unpublished or republished meanwhile. */
-export async function markDocSynced(id: string, shareId: string, updatedAt: number) {
-  await db.docs.update(id, (doc) => {
-    if (doc.shareId === shareId) doc.syncedAt = Math.max(doc.syncedAt ?? 0, updatedAt)
-  })
-}
-
-export async function clearDocShare(id: string) {
-  await db.docs.update(id, { shareId: undefined, syncedAt: undefined })
 }
 
 export async function createFolder(name: string, parentId?: string): Promise<string> {
   const now = Date.now()
   const id = nanoid(10)
-  await db.folders.add({ id, name, ...(parentId && { parentId }), createdAt: now, updatedAt: now })
+  await store.addFolder({ id, name, ...(parentId && { parentId }), createdAt: now, updatedAt: now })
   return id
-}
-
-export async function renameFolder(id: string, name: string) {
-  await db.folders.update(id, { name, updatedAt: Date.now() })
-}
-
-/** Moves a folder under another folder, or to the top level. Returns false for a move into itself or its own subfolders. */
-export async function moveFolder(id: string, parentId?: string): Promise<boolean> {
-  return db.transaction("rw", db.folders, async () => {
-    if (!canMoveFolder(await db.folders.toArray(), id, parentId)) return false
-    await db.folders.update(id, { parentId, updatedAt: Date.now() })
-    return true
-  })
 }
 
 /**
  * Deletes a folder. By default its documents and subfolders move up one level;
  * with `withContents` the whole subtree is deleted. Returns the deleted document ids.
  */
-export async function deleteFolder(id: string, { withContents = false } = {}): Promise<string[]> {
-  return db.transaction("rw", db.folders, db.docs, db.history, async () => {
-    const folder = await db.folders.get(id)
-    if (!folder) return []
-
-    if (!withContents) {
-      await db.folders.where("parentId").equals(id).modify({ parentId: folder.parentId })
-      await db.docs.where("folderId").equals(id).modify({ folderId: folder.parentId })
-      await db.folders.delete(id)
-      return []
-    }
-
-    const folderIds = [id, ...descendantIds(await db.folders.toArray(), id)]
-    const docIds = await db.docs.where("folderId").anyOf(folderIds).primaryKeys()
-    await db.docs.bulkDelete(docIds)
-    await db.history.bulkDelete(docIds)
-    await db.folders.bulkDelete(folderIds)
-    return docIds
-  })
+export function deleteFolder(id: string, { withContents = false } = {}): Promise<string[]> {
+  return store.deleteFolder(id, withContents)
 }
 
 /**
@@ -238,16 +127,13 @@ export async function importFolder(
   }
   collect(root, parentId)
 
-  await db.transaction("rw", db.folders, db.docs, async () => {
-    await db.folders.bulkAdd(folders)
-    await db.docs.bulkAdd(docs)
-  })
+  await store.addTree(folders, docs)
   return { folderIds: folders.map((folder) => folder.id), docIds: docs.map((doc) => doc.id) }
 }
 
 export function getLastDocId(): string | null {
   try {
-    return localStorage.getItem(LAST_DOC_KEY)
+    return getSetting(LAST_DOC_KEY)
   } catch {
     return null
   }
@@ -255,7 +141,7 @@ export function getLastDocId(): string | null {
 
 export function setLastDocId(id: string) {
   try {
-    localStorage.setItem(LAST_DOC_KEY, id)
+    setSetting(LAST_DOC_KEY, id)
     // lets the server send returning visitors from the landing page back to the editor
     document.cookie = `${RESUME_COOKIE}=1; path=/; max-age=31536000; samesite=lax`
   } catch {
@@ -276,9 +162,9 @@ export function resolveStartDoc(): Promise<string> {
 
 async function findStartDoc(): Promise<string> {
   const last = getLastDocId()
-  if (last && (await db.docs.get(last))) return last
+  if (last && (await getDoc(last))) return last
 
-  const recent = await db.docs.orderBy("updatedAt").last()
+  const recent = await store.mostRecentDoc()
   if (recent) return recent.id
 
   let welcome = ""

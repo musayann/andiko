@@ -1,6 +1,5 @@
 "use client"
 
-import { useLiveQuery } from "dexie-react-hooks"
 import { DownloadIcon, FilePlusIcon, FolderPlusIcon, HardDriveIcon, SearchIcon, UploadIcon } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
@@ -10,14 +9,18 @@ import { parseArchive, safeName, stripExtension, zipTree } from "@andiko/core/ar
 import {
   createDoc,
   createFolder,
-  db,
   deleteDoc,
   deleteFolder,
   duplicateDoc,
+  getDoc,
+  getDocsInFolders,
   importFolder,
+  listDocs,
+  listFolders,
   moveDoc,
   moveFolder,
   renameFolder,
+  useLiveQuery,
   type Folder,
 } from "@andiko/core/db"
 import { downloadMarkdown, downloadZip } from "@andiko/core/export"
@@ -109,8 +112,8 @@ export function AppSidebar() {
   const importTarget = useRef<string | undefined>(undefined)
 
   const data = useLiveQuery(async () => {
-    const docs = await db.docs.orderBy("updatedAt").reverse().toArray()
-    const folders = await db.folders.toArray()
+    const docs = await listDocs()
+    const folders = await listFolders()
     return {
       docs: docs.map(({ id, title, updatedAt, folderId, shareId }): DocSummary => ({
         id,
@@ -215,10 +218,7 @@ export function AppSidebar() {
 
   const handleExportFolder = async ({ folder }: FolderNode<DocSummary>) => {
     const ids = new Set([folder.id, ...descendantIds(folders, folder.id)])
-    const contents = await db.docs
-      .where("folderId")
-      .anyOf([...ids])
-      .toArray()
+    const contents = await getDocsInFolders([...ids])
     // the folder's parent is left out, so it is the tree's only top-level folder
     const subtree = buildTree(
       folders.filter((candidate) => ids.has(candidate.id)),
@@ -228,7 +228,7 @@ export function AppSidebar() {
   }
 
   const handleExportAll = async () => {
-    const all = await db.docs.toArray()
+    const all = await listDocs()
     if (all.length === 0 && folders.length === 0) {
       toast("Nothing to export")
       return
@@ -243,7 +243,7 @@ export function AppSidebar() {
   }
 
   const handleDownload = async (doc: DocSummary) => {
-    const full = await db.docs.get(doc.id)
+    const full = await getDoc(doc.id)
     if (full) downloadMarkdown(full.content, full.title)
   }
 

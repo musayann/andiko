@@ -1,6 +1,6 @@
 import { toast } from "sonner"
 
-import { clearDocShare, db, isDraft, markDocSynced, needsSync, setDocShare, type Doc } from "../db"
+import { clearDocShare, docsToSync, getDoc, getDocs, isDraft, markDocSynced, setDocShare, type Doc } from "../db"
 import { API_BASE, IS_DESKTOP_BUILD } from "../platform"
 import { contactEmail, siteUrl } from "../site"
 import { MAX_SHARE_BYTES, sharePath, utf8Length } from "./protocol"
@@ -57,7 +57,7 @@ async function errorMessage(response: Response, fallback: string): Promise<strin
 /** Uploads a document and links it to the public copy. Returns the public id. */
 export function publishDoc(docId: string): Promise<string> {
   return withSyncLock(async () => {
-    const doc = await db.docs.get(docId)
+    const doc = await getDoc(docId)
     if (!doc) throw new Error(isDraft(docId) ? "Write something before publishing." : "Document not found")
     if (doc.shareId) return doc.shareId
     if (utf8Length(doc.content) > MAX_SHARE_BYTES) throw new Error(TOO_LARGE)
@@ -102,7 +102,7 @@ function warnStillPublic(url: string, title: string, problem: string) {
 export function unpublishDocs(docIds: string[]): Promise<boolean> {
   return withSyncLock(async () => {
     let allRemoved = true
-    for (const doc of await db.docs.bulkGet(docIds)) {
+    for (const doc of await getDocs(docIds)) {
       if (!doc?.shareId) continue
       const response = await send("DELETE", `/api/shares/${doc.shareId}`)
       if (response.status === 403) {
@@ -172,7 +172,7 @@ async function push(doc: Doc, shareId: string): Promise<boolean> {
 /** Pushes every published document with unsynced edits. False when some should be retried later. */
 export function syncSharedDocs(): Promise<boolean> {
   return withSyncLock(async () => {
-    const docs = await db.docs.orderBy("shareId").filter(needsSync).toArray()
+    const docs = await docsToSync()
     for (const doc of docs) {
       if (doc.shareId && !(await push(doc, doc.shareId))) return false
     }

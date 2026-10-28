@@ -4,6 +4,8 @@ use tauri::{
 };
 use tauri_plugin_deep_link::DeepLinkExt;
 
+mod store;
+
 /// A menu entry the page reacts to (see useMenuEvents in packages/editor/src/desktop/desktop-shell.tsx).
 /// Tab shortcuts live here, not in JS, because the default "Close Window" item
 /// would otherwise take Cmd+W before the page ever sees it.
@@ -69,9 +71,15 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![print_page])
+        .invoke_handler(tauri::generate_handler![
+            print_page,
+            store::store_load,
+            store::store_get,
+            store::store_write
+        ])
         .setup(|app| {
             let handle = app.handle();
+            app.manage(store::open(handle)?);
             app.set_menu(build_menu(handle)?)?;
 
             // andiko:// links open in a tab (see useDeepLinks in packages/editor/src/desktop/desktop-shell.tsx);

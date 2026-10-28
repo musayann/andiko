@@ -1,6 +1,5 @@
 "use client"
 
-import { useLiveQuery } from "dexie-react-hooks"
 import { CopyPlusIcon, FlagIcon, LoaderCircleIcon, PencilIcon, ScrollTextIcon, ShieldIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
@@ -8,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { createDoc, db } from "@andiko/core/db"
+import { createDoc, findDocByShareId, useLiveQuery } from "@andiko/core/db"
 import { IS_DESKTOP_BUILD } from "@andiko/core/platform"
 import { docPath, sharePath } from "@andiko/core/share/protocol"
 import { contactEmail, privacyPolicy, siteUrl } from "@andiko/core/site"
@@ -53,7 +52,7 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
   // undefined while loading, null when this browser doesn't have the original
   const originalId = useLiveQuery(async () => {
     try {
-      return (await db.docs.where("shareId").equals(id).first())?.id ?? null
+      return (await findDocByShareId(id))?.id ?? null
     } catch {
       // IndexedDB unavailable (private mode)
       return null

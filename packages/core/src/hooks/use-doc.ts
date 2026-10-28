@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import { getDocWithHistory, isDraft, saveDocContent, setLastDocId } from "../db"
 
-// no "saving" state: IndexedDB writes are quick enough that showing one only flickers
+// no "saving" state: local writes are quick enough that showing one only flickers
 export type SaveState = "saved" | "unsaved"
 
 type LoadState =
@@ -24,7 +24,7 @@ interface Backup {
   at: number
 }
 
-// An IndexedDB write started while the page unloads may never finish, so
+// A save started while the page unloads may never finish, so
 // unsaved text is also parked synchronously in localStorage and restored on
 // the next load if it is newer than the stored document.
 const backupKey = (id: string) => `andiko:unsaved:${id}`

@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react"
 
+import { getSetting, setSetting } from "./db"
+
 // Open tabs of the desktop app. Each tab is a local document or a public (shared)
 // one; only the active tab's editor is mounted. The list survives restarts.
 
@@ -26,7 +28,7 @@ function isTab(value: unknown): value is Tab {
 
 function load(): TabsState {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") as Partial<TabsState> | null
+    const parsed = JSON.parse(getSetting(STORAGE_KEY) ?? "null") as Partial<TabsState> | null
     const tabs = Array.isArray(parsed?.tabs) ? parsed.tabs.filter(isTab) : []
     const active = tabs.some((tab) => tabKey(tab) === parsed?.active) ? (parsed?.active ?? null) : null
     return { tabs, active: active ?? (tabs[0] ? tabKey(tabs[0]) : null) }
@@ -43,7 +45,7 @@ const current = () => (state ??= load())
 function set(next: TabsState) {
   state = next
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    setSetting(STORAGE_KEY, JSON.stringify(next))
   } catch {
     // storage unavailable; tabs just won't survive a restart
   }

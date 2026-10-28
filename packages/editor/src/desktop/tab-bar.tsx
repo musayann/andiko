@@ -1,10 +1,9 @@
 "use client"
 
-import { useLiveQuery } from "dexie-react-hooks"
 import { FileTextIcon, GlobeIcon, LinkIcon, PlusIcon, XIcon } from "lucide-react"
 import { useState, type MouseEvent } from "react"
 
-import { db } from "@andiko/core/db"
+import { getDoc, getPublicCopy, useLiveQuery } from "@andiko/core/db"
 import { activateTab, closeTab, closeTabs, getTabs, moveTab, tabKey, type Tab, type TabsState } from "@andiko/core/tabs"
 import { Button } from "@andiko/ui/components/button"
 import { useSidebar } from "@andiko/ui/components/sidebar"
@@ -18,8 +17,8 @@ import { useTrafficLights } from "./traffic-lights"
 function useTabTitle(tab: Tab): string | undefined {
   return useLiveQuery(async () => {
     try {
-      if (tab.kind === "doc") return (await db.docs.get(tab.docId))?.title
-      return (await db.publicCopies.get(tab.shareId))?.title
+      if (tab.kind === "doc") return (await getDoc(tab.docId))?.title
+      return (await getPublicCopy(tab.shareId))?.title
     } catch {
       return undefined
     }
