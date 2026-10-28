@@ -14,7 +14,9 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useDocNav } from "@/hooks/use-doc-nav"
 import { createDoc, db } from "@/lib/db"
+import { IS_DESKTOP_BUILD } from "@/lib/platform"
 import { docPath, sharePath } from "@/lib/share/protocol"
 import { contactEmail, privacyPolicy, siteUrl } from "@/lib/site"
 
@@ -43,6 +45,7 @@ interface SharedDocumentProps {
  */
 export function SharedDocument({ id, title, content }: SharedDocumentProps) {
   const router = useRouter()
+  const nav = useDocNav()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [copying, setCopying] = useState(false)
 
@@ -62,7 +65,8 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
       // the title doubles as the fallback name, for content without a heading
       const docId = await createDoc(content, undefined, title)
       toast.success("Saved a copy to your documents")
-      router.push(`/d/${docId}`)
+      if (IS_DESKTOP_BUILD) nav.open(docId)
+      else router.push(`/d/${docId}`)
     } catch {
       toast.error("Couldn’t save a copy", {
         description: "Andiko stores documents in your browser (IndexedDB), which seems to be unavailable.",
@@ -83,17 +87,22 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
     )}`
 
   return (
-    <div className="flex h-svh flex-col">
+    <div className={IS_DESKTOP_BUILD ? "flex h-full flex-col" : "flex h-svh flex-col"}>
       <header className="flex h-12 shrink-0 items-center gap-2 border-b px-2 md:px-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2 px-1 font-semibold tracking-tight">
-          <LogoMark />
-          <span className="hidden sm:inline">Andiko</span>
-        </Link>
-        <Separator orientation="vertical" className="mx-1 data-vertical:h-5 data-vertical:self-center" />
+        {/* in the desktop app this sits in a tab, under the app's own sidebar and tab bar */}
+        {!IS_DESKTOP_BUILD && (
+          <>
+            <Link href="/" className="flex shrink-0 items-center gap-2 px-1 font-semibold tracking-tight">
+              <LogoMark />
+              <span className="hidden sm:inline">Andiko</span>
+            </Link>
+            <Separator orientation="vertical" className="mx-1 data-vertical:h-5 data-vertical:self-center" />
+          </>
+        )}
         <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{title}</h1>
-        <ThemeSwitcher className="hidden bg-muted sm:flex" />
+        {!IS_DESKTOP_BUILD && <ThemeSwitcher className="hidden bg-muted sm:flex" />}
         {/* visitors who only open a shared link see no other page, so the policy and terms are linked here too */}
-        {privacyPolicy && (
+        {privacyPolicy && !IS_DESKTOP_BUILD && (
           <>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -131,7 +140,14 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
         )}
         {originalId ? (
           <Button size="sm" asChild>
-            <Link href={docPath(originalId, id)}>
+            <Link
+              href={docPath(originalId, id)}
+              onClick={(event) => {
+                if (!IS_DESKTOP_BUILD) return
+                event.preventDefault()
+                nav.open(originalId)
+              }}
+            >
               <PencilIcon />
               Edit
             </Link>
@@ -147,7 +163,7 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
                     Make a copy
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Save an editable copy in this browser</TooltipContent>
+                <TooltipContent>Save an editable copy {IS_DESKTOP_BUILD ? "in your documents" : "in this browser"}</TooltipContent>
               </Tooltip>
             </>
           )

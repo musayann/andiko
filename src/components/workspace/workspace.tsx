@@ -16,7 +16,9 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useScrollSync } from "@/hooks/use-scroll-sync"
 import { useShareStatus, type ShareStatus, type ShareSyncState } from "@/hooks/use-share-status"
 import { downloadMarkdown, printDocument } from "@/lib/export"
+import { IS_DESKTOP_BUILD } from "@/lib/platform"
 import { SHARE_PARAM } from "@/lib/share/protocol"
+import { closeDocTabs } from "@/lib/tabs"
 import { getDocTitle } from "@/lib/title"
 import { cn } from "@/lib/utils"
 
@@ -118,9 +120,15 @@ export function Workspace({ id, sharing, linkShareId }: WorkspaceProps) {
         <p className="max-w-sm text-sm text-muted-foreground">
           It may have been deleted, or it lives in another browser. Documents are stored locally.
         </p>
-        <Button asChild variant="outline">
-          <Link href="/">Open my documents</Link>
-        </Button>
+        {IS_DESKTOP_BUILD ? (
+          <Button variant="outline" onClick={() => closeDocTabs([id])}>
+            Close tab
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <Link href="/">Open my documents</Link>
+          </Button>
+        )}
       </div>
     )
   }
@@ -205,7 +213,8 @@ function Editor({
   // While published, the address bar names the public id too, so a link copied from it opens
   // the public copy in browsers that don't have this document (see OpenPublicCopy)
   useEffect(() => {
-    if (!share.loaded) return
+    // the desktop app has no per-document address
+    if (IS_DESKTOP_BUILD || !share.loaded) return
     const url = new URL(location.href)
     if (share.shareId) url.searchParams.set(SHARE_PARAM, share.shareId)
     else url.searchParams.delete(SHARE_PARAM)

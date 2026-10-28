@@ -10,7 +10,6 @@ import {
   UploadIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -53,6 +52,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useDocNav } from "@/hooks/use-doc-nav"
 import { parseArchive, safeName, stripExtension, zipTree } from "@/lib/archive"
 import {
   createDoc,
@@ -81,6 +81,7 @@ import {
   type DocSummary,
   type FolderNode,
 } from "@/lib/folders"
+import { IS_DESKTOP_BUILD } from "@/lib/platform"
 import { shareUrl, unpublishDocs } from "@/lib/share/client"
 import { privacyPolicy } from "@/lib/site"
 import { cn } from "@/lib/utils"
@@ -96,9 +97,8 @@ const isZip = (file: File) => /\.zip$/i.test(file.name)
 type NameDialog = { mode: "create"; parentId?: string; moveInto?: TreeItem } | { mode: "rename"; folder: Folder }
 
 export function AppSidebar() {
-  const router = useRouter()
-  const params = useParams<{ id?: string }>()
-  const activeId = params.id
+  const nav = useDocNav()
+  const activeId = nav.activeId
   const [query, setQuery] = useState("")
   const [pendingDelete, setPendingDelete] = useState<DocSummary | null>(null)
   const [pendingFolderDelete, setPendingFolderDelete] = useState<FolderNode<DocSummary> | null>(null)
@@ -174,7 +174,7 @@ export function AppSidebar() {
 
   const handleNew = async (folderId?: string) => {
     const id = await createDoc("", folderId)
-    router.push(`/d/${id}`)
+    nav.open(id)
   }
 
   const openImport = (folderId?: string) => {
@@ -209,7 +209,7 @@ export function AppSidebar() {
         ? `Imported ${files[0].name}`
         : `Imported ${docIds.length} document${docIds.length === 1 ? "" : "s"}`,
     )
-    router.push(`/d/${docIds[0]}`)
+    nav.open(docIds[0])
   }
 
   const handleExportFolder = async ({ folder }: FolderNode<DocSummary>) => {
@@ -232,7 +232,7 @@ export function AppSidebar() {
 
   const handleDuplicate = async (doc: DocSummary) => {
     const id = await duplicateDoc(doc.id)
-    if (id) router.push(`/d/${id}`)
+    if (id) nav.open(id)
   }
 
   const handleDownload = async (doc: DocSummary) => {
@@ -266,9 +266,8 @@ export function AppSidebar() {
 
   /** Navigates away when the open document was just deleted. */
   const leaveIfDeleted = async (deletedIds: string[]) => {
-    if (!activeId || !deletedIds.includes(activeId)) return
     const next = docs?.find((doc) => !deletedIds.includes(doc.id))
-    router.replace(next ? `/d/${next.id}` : `/d/${await createDoc()}`)
+    await nav.leave(deletedIds, async () => next?.id ?? (await createDoc()))
   }
 
   const confirmDelete = async () => {
@@ -486,7 +485,7 @@ export function AppSidebar() {
             Export all as .zip
           </button>
         </div>
-        {privacyPolicy && (
+        {privacyPolicy && !IS_DESKTOP_BUILD && (
           <>
             <SidebarSeparator />
             <nav aria-label="Legal" className="flex gap-3 px-2 pb-1 text-[11px] text-muted-foreground/80">

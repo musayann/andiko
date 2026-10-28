@@ -8,6 +8,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useTheme } from "@/hooks/use-theme"
 import { renderMarkdown } from "@/lib/markdown/renderer"
 import { sanitizeHtml } from "@/lib/markdown/sanitize"
+import { openExternal } from "@/lib/platform"
 import { copyCodeBlock, enhancePreview, patchPreview } from "@/lib/preview-dom"
 import { cn } from "@/lib/utils"
 
@@ -68,7 +69,7 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
       articleRef.current?.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth" })
     } else {
       // never navigate the editor away; external links open in a new tab
-      window.open(link.href, "_blank", "noopener,noreferrer")
+      void openExternal(link.href)
     }
   }
 

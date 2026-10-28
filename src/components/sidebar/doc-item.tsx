@@ -11,7 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { useDocNav } from "@/hooks/use-doc-nav"
 import type { DocSummary } from "@/lib/folders"
+import { IS_DESKTOP_BUILD } from "@/lib/platform"
 import { docPath } from "@/lib/share/protocol"
 
 import { MoveToMenu } from "./move-to-menu"
@@ -42,12 +44,21 @@ const DOC_BUTTON =
 /** A document row. `path` names its folder, for search results shown outside the tree. */
 export function DocItem({ doc, path }: { doc: DocSummary; path?: string }) {
   const tree = useSidebarTree()
+  const nav = useDocNav()
   const drag = useDragSource({ kind: "doc", id: doc.id, parentId: doc.folderId })
 
   return (
     <SidebarMenuItem {...drag}>
       <SidebarMenuButton asChild isActive={doc.id === tree.activeId} className={DOC_BUTTON}>
-        <Link href={docPath(doc.id, doc.shareId)}>
+        <Link
+          href={docPath(doc.id, doc.shareId)}
+          // the desktop app opens documents in tabs instead of navigating
+          onClick={(event) => {
+            if (!IS_DESKTOP_BUILD) return
+            event.preventDefault()
+            nav.open(doc.id)
+          }}
+        >
           <FileTextIcon className="mt-0.5 self-start text-muted-foreground group-data-active/menu-button:text-foreground" />
           <span className="flex min-w-0 flex-col">
             <span className="flex items-center gap-1.5">

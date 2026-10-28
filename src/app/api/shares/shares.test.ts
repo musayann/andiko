@@ -2,9 +2,9 @@
 import { createHash } from "node:crypto"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { createShare, deleteShare, sharingEnabled, updateShare } from "@/lib/share/store"
+import { createShare, deleteShare, getShare, sharingEnabled, updateShare } from "@/lib/share/store"
 
-import { DELETE, PUT } from "./[id]/route"
+import { DELETE, GET, PUT } from "./[id]/route"
 import { POST } from "./route"
 
 vi.mock("@/lib/share/store", () => ({
@@ -13,6 +13,7 @@ vi.mock("@/lib/share/store", () => ({
   createShare: vi.fn(),
   updateShare: vi.fn(),
   deleteShare: vi.fn(),
+  getShare: vi.fn(),
 }))
 
 const TOKEN = "a".repeat(43)
@@ -102,5 +103,26 @@ describe("DELETE /api/shares/[id]", () => {
     vi.mocked(deleteShare).mockResolvedValue("forbidden")
     expect((await DELETE(request("DELETE"), params())).status).toBe(403)
     expect((await DELETE(request("DELETE", { token: null }), params())).status).toBe(401)
+  })
+})
+
+describe("GET /api/shares/[id]", () => {
+  it("returns the public copy", async () => {
+    const updatedAt = new Date("2026-01-02T03:04:05Z")
+    vi.mocked(getShare).mockResolvedValue({ id: ID, ...DOC, updatedAt })
+    const response = await GET(request("GET", { token: null }), params())
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ id: ID, ...DOC, updatedAt: updatedAt.toISOString() })
+  })
+
+  it("404s for unknown or malformed ids", async () => {
+    vi.mocked(getShare).mockResolvedValue(null)
+    expect((await GET(request("GET", { token: null }), params())).status).toBe(404)
+    expect((await GET(request("GET", { token: null }), params("nope"))).status).toBe(404)
+  })
+
+  it("503s when sharing is not configured", async () => {
+    vi.mocked(sharingEnabled).mockReturnValue(false)
+    expect((await GET(request("GET", { token: null }), params())).status).toBe(503)
   })
 })

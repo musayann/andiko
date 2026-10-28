@@ -1,3 +1,6 @@
+import { toast } from "sonner"
+
+import { API_BASE, isTauri } from "./platform"
 import { renderMarkdown } from "./markdown/renderer"
 import { sanitizeHtml } from "./markdown/sanitize"
 import { buildStaticHtml } from "./preview-dom"
@@ -10,7 +13,29 @@ export interface PdfOptions {
   pageNumbers: boolean
 }
 
-function saveBlob(blob: Blob, fileName: string) {
+/** The desktop app asks where to save, as a webview can't download to a folder by itself. */
+async function saveWithDialog(blob: Blob, fileName: string) {
+  const [{ save }, { writeFile }] = await Promise.all([
+    import("@tauri-apps/plugin-dialog"),
+    import("@tauri-apps/plugin-fs"),
+  ])
+  const extension = fileName.split(".").pop() ?? ""
+  const path = await save({
+    defaultPath: fileName,
+    filters: extension ? [{ name: extension.toUpperCase(), extensions: [extension] }] : [],
+  })
+  if (path) await writeFile(path, new Uint8Array(await blob.arrayBuffer()))
+}
+
+async function saveBlob(blob: Blob, fileName: string) {
+  if (isTauri()) {
+    try {
+      await saveWithDialog(blob, fileName)
+    } catch {
+      toast.error(`Could not save ${fileName}`)
+    }
+    return
+  }
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
   link.href = url
@@ -27,16 +52,25 @@ export async function renderStaticDocument(content: string): Promise<string> {
 }
 
 export function downloadMarkdown(content: string, title: string) {
-  saveBlob(new Blob([content], { type: "text/markdown;charset=utf-8" }), `${toFileName(title)}.md`)
+  return saveBlob(new Blob([content], { type: "text/markdown;charset=utf-8" }), `${toFileName(title)}.md`)
 }
 
 export function downloadZip(data: Uint8Array<ArrayBuffer>, name: string) {
-  saveBlob(new Blob([data], { type: "application/zip" }), `${name}.zip`)
+  return saveBlob(new Blob([data], { type: "application/zip" }), `${name}.zip`)
 }
 
 export async function downloadPdf(content: string, title: string, options: PdfOptions) {
+  // the desktop app works offline: the system print dialog saves a PDF; the server renders it if that fails
+  if (isTauri()) {
+    try {
+      await printDocument(content)
+      return
+    } catch {
+      // fall through to the server
+    }
+  }
   const html = await renderStaticDocument(content)
-  const response = await fetch("/api/export/pdf", {
+  const response = await fetch(`${API_BASE}/api/export/pdf`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ html, title, ...options }),
@@ -51,7 +85,7 @@ export async function downloadPdf(content: string, title: string, options: PdfOp
     }
     throw new Error(message)
   }
-  saveBlob(await response.blob(), `${toFileName(title)}.pdf`)
+  await saveBlob(await response.blob(), `${toFileName(title)}.pdf`)
 }
 
 function waitForImages(root: HTMLElement, timeout = 5000) {
@@ -84,5 +118,11 @@ export async function printDocument(content: string) {
     window.removeEventListener("afterprint", cleanup)
   }
   window.addEventListener("afterprint", cleanup)
-  window.print()
+  if (isTauri()) {
+    // WKWebView ignores window.print(); the shell opens the native print dialog instead
+    const { invoke } = await import("@tauri-apps/api/core")
+    await invoke("print_page")
+  } else {
+    window.print()
+  }
 }

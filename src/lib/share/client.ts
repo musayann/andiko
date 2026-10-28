@@ -1,7 +1,8 @@
 import { toast } from "sonner"
 
 import { clearDocShare, db, markDocSynced, needsSync, setDocShare, type Doc } from "@/lib/db"
-import { contactEmail } from "@/lib/site"
+import { API_BASE, IS_DESKTOP_BUILD } from "@/lib/platform"
+import { contactEmail, siteUrl } from "@/lib/site"
 
 import { MAX_SHARE_BYTES, sharePath, utf8Length } from "./protocol"
 import { getOwnerToken } from "./token"
@@ -11,7 +12,7 @@ import { getOwnerToken } from "./token"
 const TOO_LARGE = `This document is too large to publish (${MAX_SHARE_BYTES / 1024 / 1024} MB max).`
 
 /** The public link, with the title in it for readability (see sharePath). */
-export const shareUrl = (shareId: string, title: string) => `${location.origin}${sharePath(shareId, title)}`
+export const shareUrl = (shareId: string, title: string) => `${IS_DESKTOP_BUILD ? siteUrl : location.origin}${sharePath(shareId, title)}`
 
 let queue: Promise<unknown> = Promise.resolve()
 
@@ -33,7 +34,7 @@ async function send(method: string, path: string, doc?: Pick<Doc, "title" | "con
   const token = getOwnerToken()
   if (!token) throw new Error("Publishing needs browser storage, which is unavailable.")
   try {
-    return await fetch(path, {
+    return await fetch(`${API_BASE}${path}`, {
       method,
       headers: { Authorization: `Bearer ${token}`, ...(doc && { "Content-Type": "application/json" }) },
       body: doc && JSON.stringify({ title: doc.title, content: doc.content }),

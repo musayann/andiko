@@ -35,6 +35,17 @@ export interface DocHistory {
   updatedAt: number
 }
 
+/** A public document fetched by the desktop app, kept so it still opens offline. */
+export interface PublicCopy {
+  /** The public id. */
+  id: string
+  title: string
+  content: string
+  /** When the server last changed it. */
+  updatedAt: string
+  fetchedAt: number
+}
+
 export interface Folder {
   id: string
   name: string
@@ -48,6 +59,7 @@ const db = new Dexie("andiko") as Dexie & {
   docs: EntityTable<Doc, "id">
   folders: EntityTable<Folder, "id">
   history: EntityTable<DocHistory, "id">
+  publicCopies: EntityTable<PublicCopy, "id">
 }
 
 db.version(1).stores({ docs: "id, updatedAt" })
@@ -58,6 +70,8 @@ db.version(2).stores({ docs: "id, updatedAt, folderId", folders: "id, parentId" 
 db.version(3).stores({ docs: "id, updatedAt, folderId, shareId" })
 // additive only: documents without a history row start with an empty one
 db.version(4).stores({ history: "id" })
+// additive only: offline cache of public documents opened in the desktop app
+db.version(5).stores({ publicCopies: "id" })
 
 export { db }
 

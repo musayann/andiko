@@ -4,11 +4,18 @@ import { LoaderCircleIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import { DesktopShell } from "@/components/desktop/desktop-shell"
 import { LogoMark } from "@/components/logo"
 import { resolveStartDoc } from "@/lib/db"
+import { IS_DESKTOP_BUILD } from "@/lib/platform"
+
+// The desktop app is this one page: documents open in tabs instead of routes.
+export default function DocsHome() {
+  return IS_DESKTOP_BUILD ? <DesktopShell /> : <OpenStartDoc />
+}
 
 // Opens the last document, else the most recent one, else seeds the welcome doc.
-export default function OpenStartDoc() {
+function OpenStartDoc() {
   const router = useRouter()
   const [error, setError] = useState(false)
 

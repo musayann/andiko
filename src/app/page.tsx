@@ -14,9 +14,11 @@ import {
   WorkflowIcon,
 } from "lucide-react"
 
+import { DesktopRedirect } from "@/components/desktop/desktop-redirect"
 import { LogoMark } from "@/components/logo"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { Button } from "@/components/ui/button"
+import { IS_DESKTOP_BUILD } from "@/lib/platform"
 import { privacyPolicy, repoUrl, siteDescription, siteName, siteUrl } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -155,6 +157,7 @@ function GitHubIcon(props: React.ComponentProps<"svg">) {
 }
 
 export default function LandingPage() {
+  if (IS_DESKTOP_BUILD) return <DesktopRedirect />
   return (
     <div className="flex min-h-full flex-col">
       <script
