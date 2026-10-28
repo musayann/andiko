@@ -125,12 +125,7 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
               ))}
             </div>
           )}
-          <article
-            ref={articleRef}
-            className="markdown-body"
-            onClick={handleClick}
-            onContextMenu={handleContextMenu}
-          />
+          <article ref={articleRef} className="markdown-body" onClick={handleClick} onContextMenu={handleContextMenu} />
         </div>
         {showToc && <DocumentToc headings={headings} scrollRef={scrollRef} articleRef={articleRef} />}
       </div>

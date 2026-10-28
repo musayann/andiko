@@ -60,9 +60,9 @@ export default function TermsPage() {
         ) : (
           <>This instance of {siteName}</>
         )}{" "}
-        is run by {operatorName} (“we”). These terms are an agreement
-        between you and {operatorName}: by using {siteName}, and in particular by sharing a document, you agree to
-        them. How we handle personal data is described in the <Link href="/privacy">privacy policy</Link>.
+        is run by {operatorName} (“we”). These terms are an agreement between you and {operatorName}: by using{" "}
+        {siteName}, and in particular by sharing a document, you agree to them. How we handle personal data is described
+        in the <Link href="/privacy">privacy policy</Link>.
       </p>
       <OperatorDetails name={operatorName} address={operatorAddress} registration={operatorRegistration} />
 
@@ -78,9 +78,9 @@ export default function TermsPage() {
 
       <h2>Your documents</h2>
       <p>
-        Your documents are saved in your browser. We keep no copy of a document unless you share it, and we cannot
-        back up or recover your documents: clearing your browser’s data, losing your device or switching browsers can
-        lose them for good. You are responsible for exporting anything you want to keep.
+        Your documents are saved in your browser. We keep no copy of a document unless you share it, and we cannot back
+        up or recover your documents: clearing your browser’s data, losing your device or switching browsers can lose
+        them for good. You are responsible for exporting anything you want to keep.
       </p>
       <p>
         When you export a PDF, your document is sent to our server, and you allow us to process it there only to create
@@ -90,19 +90,19 @@ export default function TermsPage() {
       <h2>Sharing a document</h2>
       <p>
         When you share a document, anyone with its link can read it and save a copy in their own browser. Your edits
-        update the shared copy until you stop sharing it. A shared document can be up to{" "}
-        {MAX_SHARE_BYTES / 1024 / 1024} MB, and one browser can share up to {MAX_SHARES_PER_OWNER} documents.
+        update the shared copy until you stop sharing it. A shared document can be up to {MAX_SHARE_BYTES / 1024 / 1024}{" "}
+        MB, and one browser can share up to {MAX_SHARES_PER_OWNER} documents.
       </p>
       <p>
-        You are responsible for what you share. Only share content you have the right to share, and remember that
-        anyone who gets the link can read it.
+        You are responsible for what you share. Only share content you have the right to share, and remember that anyone
+        who gets the link can read it.
       </p>
       <p>
         You keep whatever rights you have in what you share; sharing transfers no ownership to us. You give us a free,
         non-exclusive, worldwide licence to store, copy and display a shared document, including its title in its link
-        and in link previews, as far as needed to run the service. It lasts while the document is shared and until it
-        is gone from our backups, and longer only where the law requires us to keep it. You also allow anyone who opens
-        its link to read it and save a copy for their own use.
+        and in link previews, as far as needed to run the service. It lasts while the document is shared and until it is
+        gone from our backups, and longer only where the law requires us to keep it. You also allow anyone who opens its
+        link to read it and save a copy for their own use.
       </p>
 
       <h2>What is not allowed</h2>
@@ -117,15 +117,14 @@ export default function TermsPage() {
           grounds such as ethnicity, gender, disability, nationality, age or religion, and Nazi propaganda;
         </li>
         <li>
-          harassment, threats, stalking or doxxing (publishing someone’s personal information), or encouraging others
-          to do these;
+          harassment, threats, stalking or doxxing (publishing someone’s personal information), or encouraging others to
+          do these;
         </li>
         <li>sexually explicit content;</li>
         <li>fraud, scams, phishing, or pretending to be someone else;</li>
         <li>viruses or other malware;</li>
         <li>
-          images, links or other means of tracking readers or collecting information about them without their
-          knowledge;
+          images, links or other means of tracking readers or collecting information about them without their knowledge;
         </li>
         <li>spam, or documents made only to advertise something or to manipulate search results;</li>
         <li>
@@ -148,8 +147,8 @@ export default function TermsPage() {
         <li>a statement that you believe in good faith that your report is accurate and complete.</li>
       </ul>
       <p>
-        We aim to confirm that we received your report, and to tell you what we decided and why. We do not tell the person
-        who shared the document who reported it, unless the law requires us to.
+        We aim to confirm that we received your report, and to tell you what we decided and why. We do not tell the
+        person who shared the document who reported it, unless the law requires us to.
       </p>
 
       <h2>How we moderate</h2>
@@ -167,8 +166,8 @@ export default function TermsPage() {
 
       <h2>If you disagree with a decision</h2>
       <p>
-        If we removed a document you shared, or did not act on your report, and you think we got it wrong, email{" "}
-        {mail} with the link and your reasons. We will review the decision and tell you the outcome. You can also take the
+        If we removed a document you shared, or did not act on your report, and you think we got it wrong, email {mail}{" "}
+        with the link and your reasons. We will review the decision and tell you the outcome. You can also take the
         matter to court.
       </p>
 
@@ -210,8 +209,8 @@ export default function TermsPage() {
       <p>
         These terms are adapted from the{" "}
         <a href="https://codeberg.org/Codeberg/org/src/branch/main/TermsOfUse.md">Codeberg Terms of Use</a> (
-        <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>), whose rules were inspired by
-        the <a href="https://chaos.social/about/more#rules">chaos.social terms</a> (
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>), whose rules were inspired by the{" "}
+        <a href="https://chaos.social/about/more#rules">chaos.social terms</a> (
         <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>) and the{" "}
         <a href="https://confluence.jetbrains.com/display/ALL/JetBrains+Open+Source+and+Community+Code+of+Conduct">
           JetBrains Open Source and Community Code of Conduct

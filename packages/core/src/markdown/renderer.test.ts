@@ -49,7 +49,7 @@ describe("containers", () => {
   it("renders alert boxes", () => {
     const html = render(":::warning\nCareful\n:::\n")
     expect(html).toContain('<div data-source-line="1" class="alert alert-warning">')
-    expect(html).toContain("<p data-source-line=\"2\">Careful</p>")
+    expect(html).toContain('<p data-source-line="2">Careful</p>')
   })
 
   it("renders spoilers with optional open state", () => {
@@ -66,7 +66,9 @@ describe("headings and TOC", () => {
   it("assigns slug ids and renders [TOC]", () => {
     const { html, headings } = renderMarkdown("[TOC]\n\n# Hello World\n\n## Sub `code`\n\n# Hello World\n")
     expect(headings.map((h) => h.id)).toEqual(["hello-world", "sub-code", "hello-world-1"])
-    expect(html).toContain('<nav class="toc" data-source-line="1"><ul><li><a href="#hello-world">Hello World</a><ul><li><a href="#sub-code">Sub code</a></li></ul></li><li><a href="#hello-world-1">')
+    expect(html).toContain(
+      '<nav class="toc" data-source-line="1"><ul><li><a href="#hello-world">Hello World</a><ul><li><a href="#sub-code">Sub code</a></li></ul></li><li><a href="#hello-world-1">',
+    )
     expect(html).toContain('id="hello-world"')
   })
 })

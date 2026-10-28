@@ -35,7 +35,11 @@ describe("parseAndikoLink", () => {
 
   it("opens editor links, with the public copy they name", () => {
     expect(parseAndikoLink("https://andiko.app/d/localdoc01")).toEqual({ kind: "doc", docId: "localdoc01" })
-    expect(parseAndikoLink(`andiko://d/localdoc01?share=${ID}`)).toEqual({ kind: "doc", docId: "localdoc01", shareId: ID })
+    expect(parseAndikoLink(`andiko://d/localdoc01?share=${ID}`)).toEqual({
+      kind: "doc",
+      docId: "localdoc01",
+      shareId: ID,
+    })
     expect(parseAndikoLink("https://andiko.app/d/localdoc01?share=bad")).toEqual({ kind: "doc", docId: "localdoc01" })
   })
 

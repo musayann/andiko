@@ -52,7 +52,9 @@ describe("readShareBody", () => {
     const content = "€".repeat(Math.floor(MAX_SHARE_BYTES / 3) + 1)
     const response = await readShareBody(withBody(JSON.stringify({ content })))
     expect((response as Response).status).toBe(413)
-    expect(await readShareBody(withBody(JSON.stringify({ content: "€".repeat(1000) })))).toMatchObject({ content: "€".repeat(1000) })
+    expect(await readShareBody(withBody(JSON.stringify({ content: "€".repeat(1000) })))).toMatchObject({
+      content: "€".repeat(1000),
+    })
   })
 
   it("rejects an oversized request before reading it", async () => {

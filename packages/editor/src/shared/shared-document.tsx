@@ -164,7 +164,9 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
                     Make a copy
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Save an editable copy {IS_DESKTOP_BUILD ? "in your documents" : "in this browser"}</TooltipContent>
+                <TooltipContent>
+                  Save an editable copy {IS_DESKTOP_BUILD ? "in your documents" : "in this browser"}
+                </TooltipContent>
               </Tooltip>
             </>
           )

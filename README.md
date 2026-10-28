@@ -9,7 +9,7 @@ A local-first Markdown editor with live preview and PDF export, on the web and a
 - **Extended Markdown**:
   - alert boxes (`:::info`, `:::success`, `:::warning`, `:::danger`) and `:::spoiler`
   - `[TOC]`, KaTeX math (`$…$`, `$$…$$`) and Mermaid diagrams
-  - code blocks with line numbers (`` ```js= ``, `=101`, `=+`) and wrapping (`!`)
+  - code blocks with line numbers (` ```js= `, `=101`, `=+`) and wrapping (`!`)
   - task lists you can click in the preview
   - footnotes, definition lists, abbreviations, `==mark==`, `++ins++`, `~sub~`, `^sup^` and emoji shortcodes
   - YAML front matter (`title`, `tags`, `breaks`)
@@ -33,8 +33,8 @@ The first visit seeds a "Welcome" document that shows every supported feature.
 
 The repo is a pnpm workspace run by [Turborepo](https://turborepo.com). The root scripts run the task in every workspace that has it:
 
-| Script               | Purpose                                                  |
-| -------------------- | -------------------------------------------------------- |
+| Script               | Purpose                                                   |
+| -------------------- | --------------------------------------------------------- |
 | `pnpm dev`           | Website development server (Turbopack)                    |
 | `pnpm dev:desktop`   | Mac app in development (Tauri, with hot reload)           |
 | `pnpm build`         | Production builds of the website and the desktop frontend |
@@ -71,11 +71,11 @@ On Vercel, set the project's Root Directory to `apps/web`.
 
 The route picks a Chrome in this order:
 
-| Environment                         | Chrome used                                                      |
-| ----------------------------------- | ---------------------------------------------------------------- |
-| Vercel / AWS Lambda                 | [`@sparticuz/chromium`](https://github.com/Sparticuz/chromium)   |
-| `CHROME_EXECUTABLE_PATH` is set     | That binary (e.g. `/usr/bin/chromium` in Docker)                  |
-| Local development                   | The Chrome downloaded by the `puppeteer` dev dependency          |
+| Environment                     | Chrome used                                                    |
+| ------------------------------- | -------------------------------------------------------------- |
+| Vercel / AWS Lambda             | [`@sparticuz/chromium`](https://github.com/Sparticuz/chromium) |
+| `CHROME_EXECUTABLE_PATH` is set | That binary (e.g. `/usr/bin/chromium` in Docker)               |
+| Local development               | The Chrome downloaded by the `puppeteer` dev dependency        |
 
 For Docker or other self-hosting, install Chromium in the image and set `CHROME_EXECUTABLE_PATH`. Serverless Chromium ships with few system fonts, so emoji and CJK text may need extra fonts (see `chromium.font()` in the sparticuz docs).
 

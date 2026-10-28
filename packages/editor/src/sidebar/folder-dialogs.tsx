@@ -50,7 +50,13 @@ export function FolderNameDialog({ open, onOpenChange, ...form }: NameDialogProp
   )
 }
 
-function NameForm({ title, description, submitLabel, defaultName = "", onSubmit }: Omit<NameDialogProps, "open" | "onOpenChange">) {
+function NameForm({
+  title,
+  description,
+  submitLabel,
+  defaultName = "",
+  onSubmit,
+}: Omit<NameDialogProps, "open" | "onOpenChange">) {
   const [name, setName] = useState(defaultName)
   const trimmed = name.trim()
 
@@ -112,7 +118,10 @@ interface DeleteFolderDialogProps {
 export function DeleteFolderDialog({ target, onOpenChange, onConfirm }: DeleteFolderDialogProps) {
   const empty = target !== null && target.docCount === 0 && target.folderCount === 0
   const contents = target
-    ? [target.docCount && plural(target.docCount, "document"), target.folderCount && plural(target.folderCount, "subfolder")]
+    ? [
+        target.docCount && plural(target.docCount, "document"),
+        target.folderCount && plural(target.folderCount, "subfolder"),
+      ]
         .filter(Boolean)
         .join(" and ")
     : ""

@@ -10,10 +10,13 @@
     "build:web": "turbo build --filter=@andiko/web",
     "build:desktop": "pnpm --filter @andiko/desktop tauri build",
     "lint": "turbo lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "turbo test",
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
+    "prettier": "^3.9.10",
     "turbo": "^2.11.10"
   },
   "packageManager": "pnpm@12.6.0"

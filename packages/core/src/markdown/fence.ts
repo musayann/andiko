@@ -106,9 +106,7 @@ export function fencePlugin(md: MarkdownIt) {
       const last = start + lines.length - 1
       env.lastCodeLine = last
       preAttrs = ` style="--ln-digits: ${String(last).length}"`
-      body = lines
-        .map((line, i) => `<span class="code-line" data-line-number="${start + i}">${line}</span>`)
-        .join("")
+      body = lines.map((line, i) => `<span class="code-line" data-line-number="${start + i}">${line}</span>`).join("")
     }
 
     return (

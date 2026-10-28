@@ -11,7 +11,8 @@ import { getOwnerToken } from "./token"
 const TOO_LARGE = `This document is too large to publish (${MAX_SHARE_BYTES / 1024 / 1024} MB max).`
 
 /** The public link, with the title in it for readability (see sharePath). */
-export const shareUrl = (shareId: string, title: string) => `${IS_DESKTOP_BUILD ? siteUrl : location.origin}${sharePath(shareId, title)}`
+export const shareUrl = (shareId: string, title: string) =>
+  `${IS_DESKTOP_BUILD ? siteUrl : location.origin}${sharePath(shareId, title)}`
 
 let queue: Promise<unknown> = Promise.resolve()
 

@@ -167,7 +167,8 @@
   body:has([data-slot="sidebar-wrapper"]) {
     overflow: hidden;
   }
-  button:not(:disabled), [role="button"]:not(:disabled) {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
     cursor: pointer;
   }
   html {

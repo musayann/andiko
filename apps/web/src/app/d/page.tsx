@@ -24,8 +24,8 @@ export default function OpenStartDoc() {
       <LogoMark className="size-10" />
       {error ? (
         <p className="max-w-sm text-center">
-          Andiko stores documents in your browser (IndexedDB), which seems to be unavailable. Private browsing
-          modes sometimes block it.
+          Andiko stores documents in your browser (IndexedDB), which seems to be unavailable. Private browsing modes
+          sometimes block it.
         </p>
       ) : (
         <LoaderCircleIcon className="size-5 animate-spin" aria-label="Loading" />

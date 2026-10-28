@@ -1,14 +1,7 @@
 "use client"
 
 import { useLiveQuery } from "dexie-react-hooks"
-import {
-  DownloadIcon,
-  FilePlusIcon,
-  FolderPlusIcon,
-  HardDriveIcon,
-  SearchIcon,
-  UploadIcon,
-} from "lucide-react"
+import { DownloadIcon, FilePlusIcon, FolderPlusIcon, HardDriveIcon, SearchIcon, UploadIcon } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { toast } from "sonner"
@@ -119,9 +112,13 @@ export function AppSidebar() {
     const docs = await db.docs.orderBy("updatedAt").reverse().toArray()
     const folders = await db.folders.toArray()
     return {
-      docs: docs.map(
-        ({ id, title, updatedAt, folderId, shareId }): DocSummary => ({ id, title, updatedAt, folderId, shareId }),
-      ),
+      docs: docs.map(({ id, title, updatedAt, folderId, shareId }): DocSummary => ({
+        id,
+        title,
+        updatedAt,
+        folderId,
+        shareId,
+      })),
       folders,
     }
   }, [])
@@ -218,9 +215,15 @@ export function AppSidebar() {
 
   const handleExportFolder = async ({ folder }: FolderNode<DocSummary>) => {
     const ids = new Set([folder.id, ...descendantIds(folders, folder.id)])
-    const contents = await db.docs.where("folderId").anyOf([...ids]).toArray()
+    const contents = await db.docs
+      .where("folderId")
+      .anyOf([...ids])
+      .toArray()
     // the folder's parent is left out, so it is the tree's only top-level folder
-    const subtree = buildTree(folders.filter((candidate) => ids.has(candidate.id)), contents)
+    const subtree = buildTree(
+      folders.filter((candidate) => ids.has(candidate.id)),
+      contents,
+    )
     downloadZip(zipTree(subtree), safeName(folder.name, "folder"))
   }
 
@@ -483,11 +486,7 @@ export function AppSidebar() {
             <HardDriveIcon className="mt-px size-3.5 shrink-0" />
             Documents are stored in this browser
           </p>
-          <button
-            type="button"
-            onClick={() => void handleExportAll()}
-            className={FOOTER_LINK}
-          >
+          <button type="button" onClick={() => void handleExportAll()} className={FOOTER_LINK}>
             <DownloadIcon className="size-3.5 shrink-0" />
             Export all as .zip
           </button>

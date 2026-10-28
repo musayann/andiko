@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  # lets deploy workflows run it first (needs: ci)
+  workflow_call:
+
+permissions:
+  contents: read
+
+# a newer push to a branch supersedes a run still going; runs on main always finish
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # the job name is the status check required on main and by Vercel's Deployment Checks
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # the tests don't launch a browser
+      PUPPETEER_SKIP_DOWNLOAD: "true"
+    steps:
+      - uses: actions/checkout@v7
+
+      # version from package.json "packageManager"
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - id: install
+        run: pnpm install --frozen-lockfile
+
+      # each check runs even if an earlier one failed, so one run reports every problem
+      - name: Lint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm lint
+
+      - name: Format
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm format:check
+
+      - name: Typecheck
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm typecheck
+
+      - name: Test
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm test

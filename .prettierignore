@@ -1,0 +1,18 @@
+# .gitignore is also applied
+
+pnpm-lock.yaml
+
+# Rust build output, generated schemas and icon sources (ignored by a nested .gitignore Prettier doesn't read)
+**/src-tauri/target
+**/src-tauri/gen
+**/src-tauri/icons
+
+# served as-is to users (welcome.md is the demo document)
+**/public
+
+# local Claude Code settings
+.claude/settings.local.json
+
+# rewritten by `next dev`
+**/AGENTS.md
+**/CLAUDE.md
