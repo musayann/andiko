@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "globalEnv": [
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_CONTACT_EMAIL",
+    "NEXT_PUBLIC_OPERATOR_NAME",
+    "NEXT_PUBLIC_OPERATOR_ADDRESS",
+    "NEXT_PUBLIC_OPERATOR_REGISTRATION",
+    "NEXT_PUBLIC_DATABASE_REGION",
+    "NEXT_PUBLIC_SERVER_REGION"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "out/**"]
+    },
+    "lint": {},
+    "test": {},
+    "typecheck": {},
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

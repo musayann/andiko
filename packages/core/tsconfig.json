@@ -1,0 +1,5 @@
+{
+  "extends": "@andiko/config/tsconfig/react-library.json",
+  "include": ["**/*.ts", "**/*.tsx", "**/*.mts"],
+  "exclude": ["node_modules"]
+}
