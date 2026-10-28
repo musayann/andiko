@@ -45,6 +45,8 @@ The repo is a pnpm workspace run by [Turborepo](https://turborepo.com). The root
 
 To run a task in one workspace, filter it, e.g. `pnpm --filter @andiko/core test`.
 
+The Mac app's SQLite store has Rust tests: `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`.
+
 ## Mac app
 
 `apps/desktop` wraps the editor in [Tauri](https://tauri.app). Its frontend is a static export of the same components, loaded from disk, so documents stay on the Mac and editing works offline. They are kept in a SQLite database at `~/Library/Application Support/app.andiko.desktop/andiko.db`, where Time Machine backs them up, together with the open tabs and the key to your published documents (`pnpm dev:desktop` uses `andiko-dev.db` next to it). On first launch, the app moves in what earlier versions kept in WebKit's storage. Documents open in tabs (<kbd>⌘</kbd><kbd>T</kbd> new, <kbd>⌘</kbd><kbd>W</kbd> close, <kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd>, <kbd>⌘</kbd><kbd>L</kbd> opens a shared link in a tab). Links to the site in a document open in a tab too, and the app handles the `andiko://` scheme: `andiko://s/<slug>-<id>` opens what `https://andiko.app/s/<slug>-<id>` shows (macOS registers it when the app is installed, so it doesn't reach `pnpm dev:desktop`). Sharing and the PDF fallback call the website's API at `NEXT_PUBLIC_SITE_URL`; PDF export otherwise uses the system print dialog. Building it needs Rust (`cargo`).

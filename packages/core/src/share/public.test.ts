@@ -1,8 +1,59 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { parseAndikoLink, parseShareInput } from "./public"
+import { getPublicCopy, putPublicCopy, type PublicCopy } from "../db"
+import { now } from "../store/contract"
+import { indexedDb } from "../store/indexeddb"
+import { loadPublicCopy, parseAndikoLink, parseShareInput } from "./public"
 
 const ID = "abcdefghijkl"
+
+describe("loadPublicCopy", () => {
+  const BODY = { id: ID, title: "Notes", content: "# Notes", updatedAt: "2026-01-02T03:04:05.000Z" }
+  const SAVED: PublicCopy = { ...BODY, content: "# Older", fetchedAt: 1 }
+
+  function stubFetch(respond: () => Promise<Response>) {
+    const fetch = vi.fn(respond)
+    vi.stubGlobal("fetch", fetch)
+    return fetch
+  }
+
+  beforeEach(() => indexedDb.publicCopies.clear())
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it("fetches the public copy and keeps it for offline use", async () => {
+    const fetch = stubFetch(async () => new Response(JSON.stringify(BODY)))
+    now(1234)
+    const copy = { ...BODY, fetchedAt: 1234 }
+    expect(await loadPublicCopy(ID)).toEqual({ status: "ok", copy, offline: false })
+    expect(fetch).toHaveBeenCalledWith(`/api/shares/${ID}`)
+    expect(await getPublicCopy(ID)).toEqual(copy)
+  })
+
+  it("forgets a copy that was removed", async () => {
+    await putPublicCopy(SAVED)
+    stubFetch(async () => new Response(null, { status: 404 }))
+    expect(await loadPublicCopy(ID)).toEqual({ status: "missing" })
+    expect(await getPublicCopy(ID)).toBeUndefined()
+  })
+
+  it("falls back to the saved copy when the server can't be reached or fails", async () => {
+    await putPublicCopy(SAVED)
+    stubFetch(() => Promise.reject(new TypeError("Failed to fetch")))
+    expect(await loadPublicCopy(ID)).toEqual({ status: "ok", copy: SAVED, offline: true })
+    stubFetch(async () => new Response(null, { status: 503 }))
+    expect(await loadPublicCopy(ID)).toEqual({ status: "ok", copy: SAVED, offline: true })
+    expect(await getPublicCopy(ID)).toEqual(SAVED)
+  })
+
+  it("is unavailable offline without a saved copy", async () => {
+    stubFetch(() => Promise.reject(new TypeError("Failed to fetch")))
+    expect(await loadPublicCopy(ID)).toEqual({ status: "unavailable" })
+  })
+})
 
 describe("parseShareInput", () => {
   it("reads the id from public links, slugs and bare ids", () => {

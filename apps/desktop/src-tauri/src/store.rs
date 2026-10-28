@@ -90,31 +90,22 @@ pub struct Snapshot {
     settings: HashMap<String, Value>,
 }
 
-/// Every row but the editor histories, which are read one at a time.
-#[tauri::command]
-pub async fn store_load(store: State<'_, Store>) -> Result<Snapshot, String> {
-    let conn = store.0.lock().map_err(|e| e.to_string())?;
-    let load = || -> rusqlite::Result<Snapshot> {
-        let mut stmt = conn.prepare("SELECT id, value FROM settings")?;
-        let settings = stmt
-            .query_map([], |row| Ok((row.get(0)?, parse(row.get(1)?)?)))?
-            .collect::<rusqlite::Result<_>>()?;
-        Ok(Snapshot {
-            docs: values(&conn, Table::Docs)?,
-            folders: values(&conn, Table::Folders)?,
-            public_copies: values(&conn, Table::PublicCopies)?,
-            settings,
-        })
-    };
-    load().map_err(|e| e.to_string())
+fn load(conn: &Connection) -> rusqlite::Result<Snapshot> {
+    let mut stmt = conn.prepare("SELECT id, value FROM settings")?;
+    let settings = stmt
+        .query_map([], |row| Ok((row.get(0)?, parse(row.get(1)?)?)))?
+        .collect::<rusqlite::Result<_>>()?;
+    Ok(Snapshot {
+        docs: values(conn, Table::Docs)?,
+        folders: values(conn, Table::Folders)?,
+        public_copies: values(conn, Table::PublicCopies)?,
+        settings,
+    })
 }
 
-#[tauri::command]
-pub async fn store_get(store: State<'_, Store>, table: Table, id: String) -> Result<Option<Value>, String> {
-    let conn = store.0.lock().map_err(|e| e.to_string())?;
+fn get(conn: &Connection, table: Table, id: &str) -> rusqlite::Result<Option<Value>> {
     conn.query_row(&format!("SELECT value FROM {} WHERE id = ?1", table.name()), [id], |row| parse(row.get(0)?))
         .optional()
-        .map_err(|e| e.to_string())
 }
 
 /// Stores `value` under `id`, or deletes the row when it is null.
@@ -125,22 +116,140 @@ pub struct WriteOp {
     value: Option<Value>,
 }
 
+fn write(conn: &mut Connection, ops: Vec<WriteOp>) -> rusqlite::Result<()> {
+    let tx = conn.transaction()?;
+    for op in ops {
+        let table = op.table.name();
+        match op.value {
+            Some(value) => tx
+                .prepare_cached(&format!("INSERT OR REPLACE INTO {table} (id, value) VALUES (?1, ?2)"))?
+                .execute(params![op.id, value.to_string()])?,
+            None => tx.prepare_cached(&format!("DELETE FROM {table} WHERE id = ?1"))?.execute([op.id])?,
+        };
+    }
+    tx.commit()
+}
+
+/// Every row but the editor histories, which are read one at a time.
+#[tauri::command]
+pub async fn store_load(store: State<'_, Store>) -> Result<Snapshot, String> {
+    let conn = store.0.lock().map_err(|e| e.to_string())?;
+    load(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn store_get(store: State<'_, Store>, table: Table, id: String) -> Result<Option<Value>, String> {
+    let conn = store.0.lock().map_err(|e| e.to_string())?;
+    get(&conn, table, &id).map_err(|e| e.to_string())
+}
+
 /// Applies the writes all together or not at all.
 #[tauri::command]
 pub async fn store_write(store: State<'_, Store>, ops: Vec<WriteOp>) -> Result<(), String> {
     let mut conn = store.0.lock().map_err(|e| e.to_string())?;
-    let write = || -> rusqlite::Result<()> {
-        let tx = conn.transaction()?;
-        for op in ops {
-            let table = op.table.name();
-            match op.value {
-                Some(value) => tx
-                    .prepare_cached(&format!("INSERT OR REPLACE INTO {table} (id, value) VALUES (?1, ?2)"))?
-                    .execute(params![op.id, value.to_string()])?,
-                None => tx.prepare_cached(&format!("DELETE FROM {table} WHERE id = ?1"))?.execute([op.id])?,
-            };
-        }
-        tx.commit()
-    };
-    write().map_err(|e| e.to_string())
+    write(&mut conn, ops).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    fn open() -> Connection {
+        let mut conn = Connection::open_in_memory().unwrap();
+        migrate(&mut conn).unwrap();
+        conn
+    }
+
+    /// Ops as the page sends them (see packages/core/src/store/sqlite.ts).
+    fn ops(value: Value) -> Vec<WriteOp> {
+        serde_json::from_value(value).unwrap()
+    }
+
+    fn user_version(conn: &Connection) -> i64 {
+        conn.pragma_query_value(None, "user_version", |row| row.get(0)).unwrap()
+    }
+
+    #[test]
+    fn migrates_to_the_latest_version_once() {
+        let mut conn = open();
+        assert_eq!(user_version(&conn), MIGRATIONS.len() as i64);
+        migrate(&mut conn).unwrap();
+        assert_eq!(user_version(&conn), MIGRATIONS.len() as i64);
+    }
+
+    #[test]
+    fn reads_back_what_was_written() {
+        let mut conn = open();
+        let doc = json!({ "id": "a", "title": "A", "content": "# A", "createdAt": 1, "updatedAt": 2 });
+        write(
+            &mut conn,
+            ops(json!([
+                { "table": "docs", "id": "a", "value": doc },
+                { "table": "folders", "id": "f", "value": { "id": "f", "name": "Work" } },
+                { "table": "history", "id": "a", "value": { "id": "a", "history": [], "updatedAt": 2 } },
+                { "table": "publicCopies", "id": "p", "value": { "id": "p", "title": "P" } },
+                { "table": "settings", "id": "andiko:tabs", "value": "[]" },
+            ])),
+        )
+        .unwrap();
+
+        let snapshot = serde_json::to_value(load(&conn).unwrap()).unwrap();
+        assert_eq!(
+            snapshot,
+            json!({
+                "docs": [doc],
+                "folders": [{ "id": "f", "name": "Work" }],
+                "publicCopies": [{ "id": "p", "title": "P" }],
+                "settings": { "andiko:tabs": "[]" },
+            })
+        );
+        assert_eq!(
+            get(&conn, Table::History, "a").unwrap(),
+            Some(json!({ "id": "a", "history": [], "updatedAt": 2 }))
+        );
+    }
+
+    #[test]
+    fn replaces_and_deletes_rows() {
+        let mut conn = open();
+        write(&mut conn, ops(json!([{ "table": "docs", "id": "a", "value": { "v": 1 } }]))).unwrap();
+        write(&mut conn, ops(json!([{ "table": "docs", "id": "a", "value": { "v": 2 } }]))).unwrap();
+        assert_eq!(get(&conn, Table::Docs, "a").unwrap(), Some(json!({ "v": 2 })));
+
+        write(&mut conn, ops(json!([{ "table": "docs", "id": "a", "value": null }]))).unwrap();
+        assert_eq!(get(&conn, Table::Docs, "a").unwrap(), None);
+        // deleting a missing row is fine
+        write(&mut conn, ops(json!([{ "table": "docs", "id": "a", "value": null }]))).unwrap();
+    }
+
+    #[test]
+    fn applies_writes_all_or_nothing() {
+        let mut conn = open();
+        conn.execute_batch("DROP TABLE folders").unwrap();
+        let result = write(
+            &mut conn,
+            ops(json!([
+                { "table": "docs", "id": "a", "value": { "id": "a" } },
+                { "table": "folders", "id": "f", "value": { "id": "f" } },
+            ])),
+        );
+        assert!(result.is_err());
+        assert_eq!(get(&conn, Table::Docs, "a").unwrap(), None);
+    }
+
+    #[test]
+    fn rejects_unknown_tables() {
+        let result = serde_json::from_value::<Vec<WriteOp>>(json!([{ "table": "sqlite_master", "id": "x", "value": null }]));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn fails_to_load_a_corrupt_row() {
+        let conn = open();
+        conn.execute("INSERT INTO docs (id, value) VALUES ('a', 'not json')", []).unwrap();
+        assert!(load(&conn).is_err());
+        assert!(get(&conn, Table::Docs, "a").is_err());
+    }
 }
