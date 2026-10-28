@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
     "tauri": "tauri",
     "icon:car": "icons=$(pwd -P)/src-tauri/icons && out=$(mktemp -d) && xcrun actool \"$icons/andiko.icon\" --compile \"$out\" --output-partial-info-plist \"$out/info.plist\" --app-icon andiko --include-all-app-icons --target-device mac --minimum-deployment-target 26.0 --platform macosx --output-format human-readable-text && cp \"$out/Assets.car\" \"$icons/Assets.car\""

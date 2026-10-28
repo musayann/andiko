@@ -19,7 +19,9 @@ export const tabKey = (tab: Tab) => (tab.kind === "doc" ? `doc:${tab.docId}` : `
 function isTab(value: unknown): value is Tab {
   if (!value || typeof value !== "object") return false
   const tab = value as Record<string, unknown>
-  return (tab.kind === "doc" && typeof tab.docId === "string") || (tab.kind === "public" && typeof tab.shareId === "string")
+  return (
+    (tab.kind === "doc" && typeof tab.docId === "string") || (tab.kind === "public" && typeof tab.shareId === "string")
+  )
 }
 
 function load(): TabsState {
@@ -68,7 +70,8 @@ export function openTab(tab: Tab, { background = false } = {}) {
   set({ tabs: exists ? tabs : [...tabs, tab], active: background && active ? active : key })
 }
 
-export const openDocTab = (docId: string, options?: { background?: boolean }) => openTab({ kind: "doc", docId }, options)
+export const openDocTab = (docId: string, options?: { background?: boolean }) =>
+  openTab({ kind: "doc", docId }, options)
 export const openPublicTab = (shareId: string, options?: { background?: boolean }) =>
   openTab({ kind: "public", shareId }, options)
 

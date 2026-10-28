@@ -282,7 +282,9 @@ export const insertDivider = insertAfter("---", [3, 3])
 export type ContainerKind = (typeof ALERT_TYPES)[number] | "spoiler"
 
 export function insertContainer(kind: ContainerKind): StateCommand {
-  return kind === "spoiler" ? wrapBlock(":::spoiler Title", ":::", "Hidden content") : wrapBlock(`:::${kind}`, ":::", "Text")
+  return kind === "spoiler"
+    ? wrapBlock(":::spoiler Title", ":::", "Hidden content")
+    : wrapBlock(`:::${kind}`, ":::", "Text")
 }
 
 export function tableMarkdown(rows: number, cols: number): string {

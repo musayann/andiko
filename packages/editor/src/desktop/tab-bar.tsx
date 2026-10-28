@@ -5,16 +5,7 @@ import { FileTextIcon, GlobeIcon, LinkIcon, PlusIcon, XIcon } from "lucide-react
 import { useState, type MouseEvent } from "react"
 
 import { db } from "@andiko/core/db"
-import {
-  activateTab,
-  closeTab,
-  closeTabs,
-  getTabs,
-  moveTab,
-  tabKey,
-  type Tab,
-  type TabsState,
-} from "@andiko/core/tabs"
+import { activateTab, closeTab, closeTabs, getTabs, moveTab, tabKey, type Tab, type TabsState } from "@andiko/core/tabs"
 import { Button } from "@andiko/ui/components/button"
 import { useSidebar } from "@andiko/ui/components/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"

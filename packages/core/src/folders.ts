@@ -34,9 +34,14 @@ function inCycle(byId: Map<string, Folder>, id: string): boolean {
  * sits in a parent cycle) lands at the top level, so no document is ever hidden.
  * Folders sort by name, documents keep their incoming order.
  */
-export function buildTree<D extends Pick<Doc, "folderId">>(folders: readonly Folder[], docs: readonly D[]): FolderTree<D> {
+export function buildTree<D extends Pick<Doc, "folderId">>(
+  folders: readonly Folder[],
+  docs: readonly D[],
+): FolderTree<D> {
   const byId = new Map(folders.map((folder) => [folder.id, folder]))
-  const nodes = new Map(folders.map((folder): [string, FolderNode<D>] => [folder.id, { folder, children: [], docs: [] }]))
+  const nodes = new Map(
+    folders.map((folder): [string, FolderNode<D>] => [folder.id, { folder, children: [], docs: [] }]),
+  )
   const tree: FolderTree<D> = { folders: [], docs: [] }
 
   for (const node of nodes.values()) {

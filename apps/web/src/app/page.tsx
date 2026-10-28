@@ -288,7 +288,12 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t">
-        <div className={cn(container, "flex flex-wrap items-center justify-between gap-4 py-6 text-sm text-muted-foreground")}>
+        <div
+          className={cn(
+            container,
+            "flex flex-wrap items-center justify-between gap-4 py-6 text-sm text-muted-foreground",
+          )}
+        >
           <span className="flex items-center gap-2">
             <LogoMark className="size-5" />
             {siteName} is open source under the MIT License.

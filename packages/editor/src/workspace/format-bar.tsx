@@ -18,18 +18,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"
 import { cn } from "@andiko/ui/lib/utils"
 
-import {
-  BLOCKS,
-  CONTAINERS,
-  EXTRAS,
-  HEADINGS,
-  INLINE,
-  LINES,
-  LINKS,
-  REDO,
-  UNDO,
-  type Action,
-} from "./format-actions"
+import { BLOCKS, CONTAINERS, EXTRAS, HEADINGS, INLINE, LINES, LINKS, REDO, UNDO, type Action } from "./format-actions"
 
 // total rows in the picker include the header row
 const TABLE_COLS = 8

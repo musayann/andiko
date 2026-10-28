@@ -64,14 +64,9 @@ describe("zipTree", () => {
       [folder("a", "Docs"), folder("b", "docs")],
       [doc("no title"), doc("still none"), doc("# Untitled"), doc("x", undefined, "UNTITLED")],
     )
-    expect(names(zipTree(tree))).toEqual([
-      "UNTITLED-4.md",
-      "Docs/",
-      "docs-2/",
-      "untitled-2.md",
-      "untitled-3.md",
-      "untitled.md",
-    ].sort())
+    expect(names(zipTree(tree))).toEqual(
+      ["UNTITLED-4.md", "Docs/", "docs-2/", "untitled-2.md", "untitled-3.md", "untitled.md"].sort(),
+    )
   })
 
   it("stores document content as UTF-8", () => {

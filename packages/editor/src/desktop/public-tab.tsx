@@ -83,7 +83,12 @@ export function PublicTab({ shareId }: { shareId: string }) {
       )}
       <div className="min-h-0 flex-1">
         {/* keyed so a refreshed copy re-renders from scratch */}
-        <SharedDocument key={result.copy.updatedAt} id={result.copy.id} title={result.copy.title} content={result.copy.content} />
+        <SharedDocument
+          key={result.copy.updatedAt}
+          id={result.copy.id}
+          title={result.copy.title}
+          content={result.copy.content}
+        />
       </div>
     </div>
   )

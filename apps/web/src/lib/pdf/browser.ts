@@ -24,10 +24,9 @@ async function launch(): Promise<Browser> {
     const bundled = (await import("puppeteer")).default
     return (await bundled.launch({ headless: true })) as unknown as Browser
   } catch (error) {
-    throw new Error(
-      "No Chrome found for PDF export. Set CHROME_EXECUTABLE_PATH or install the `puppeteer` package.",
-      { cause: error },
-    )
+    throw new Error("No Chrome found for PDF export. Set CHROME_EXECUTABLE_PATH or install the `puppeteer` package.", {
+      cause: error,
+    })
   }
 }
 

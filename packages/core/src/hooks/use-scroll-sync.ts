@@ -20,11 +20,7 @@ type Pane = "editor" | "preview"
  * using the preview's `data-source-line` anchors. Returns `invalidate`, to be
  * called whenever the preview re-renders.
  */
-export function useScrollSync(
-  enabled: boolean,
-  view: EditorView | null,
-  previewRef: RefObject<HTMLDivElement | null>,
-) {
+export function useScrollSync(enabled: boolean, view: EditorView | null, previewRef: RefObject<HTMLDivElement | null>) {
   const anchorsRef = useRef<LineAnchor[] | null>(null)
   const invalidate = useCallback(() => {
     anchorsRef.current = null

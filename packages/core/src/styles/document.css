@@ -54,8 +54,17 @@
   --hl-del-fg: #b31d28;
   --hl-del-bg: #ffeef0;
 
-  font-family: "Source Sans 3 Variable", "Source Sans Pro", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family:
+    "Source Sans 3 Variable",
+    "Source Sans Pro",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Helvetica,
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
   font-size: 16px;
   line-height: 1.6;
   color: var(--md-fg);
@@ -178,7 +187,12 @@
 .markdown-body kbd {
   display: inline-block;
   padding: 3px 5px;
-  font: 11px/10px "Source Code Pro Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font:
+    11px/10px "Source Code Pro Variable",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
   color: var(--md-fg);
   vertical-align: middle;
   background-color: var(--md-kbd-bg);
@@ -393,8 +407,7 @@
 
 .markdown-body code,
 .markdown-body pre {
-  font-family: "Source Code Pro Variable", "Source Code Pro", ui-monospace, SFMono-Regular, Menlo,
-    Consolas, monospace;
+  font-family: "Source Code Pro Variable", "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .markdown-body code {
@@ -480,7 +493,9 @@
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  font: 12px/1.4 "Source Sans 3 Variable", sans-serif;
+  font:
+    12px/1.4 "Source Sans 3 Variable",
+    sans-serif;
   color: var(--md-muted);
   background-color: var(--md-bg);
   border: 1px solid var(--md-table-border);

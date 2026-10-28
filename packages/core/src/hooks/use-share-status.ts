@@ -22,5 +22,9 @@ export function useShareStatus(docId: string): ShareStatus {
     return { shareId: doc?.shareId, pending: doc !== undefined && needsSync(doc) }
   }, [docId])
   const failing = useSyncExternalStore(subscribeSyncFailing, isSyncFailing, () => false)
-  return { loaded: doc !== undefined, shareId: doc?.shareId, sync:!doc?.pending ? "synced" : failing ? "failing" : "syncing" }
+  return {
+    loaded: doc !== undefined,
+    shareId: doc?.shareId,
+    sync: !doc?.pending ? "synced" : failing ? "failing" : "syncing",
+  }
 }

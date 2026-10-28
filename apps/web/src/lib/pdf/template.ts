@@ -44,8 +44,7 @@ function loadStyles(): Promise<string> {
   return cachedStyles
 }
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`)
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`)
 
 /** A standalone HTML page for the PDF renderer. `bodyHtml` is untrusted. */
 export async function buildPdfHtml(bodyHtml: string, title: string): Promise<string> {

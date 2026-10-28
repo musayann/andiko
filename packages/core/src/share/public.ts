@@ -7,7 +7,11 @@ import { isShareId, SHARE_PARAM, shareIdFromSegment } from "./protocol"
 // last copy it saw, so a tab opened once still works offline.
 
 export type PublicLoad =
-  | { status: "ok"; copy: PublicCopy; /** True when the server couldn't be reached and this is the saved copy. */ offline: boolean }
+  | {
+      status: "ok"
+      copy: PublicCopy
+      /** True when the server couldn't be reached and this is the saved copy. */ offline: boolean
+    }
   | { status: "missing" }
   | { status: "unavailable" }
 
@@ -67,7 +71,8 @@ export function parseAndikoLink(href: string): AndikoLink | null {
   } catch {
     return null
   }
-  const onSite = (url.protocol === "https:" || url.protocol === "http:") && bareHost(url.host) === bareHost(new URL(siteUrl).host)
+  const onSite =
+    (url.protocol === "https:" || url.protocol === "http:") && bareHost(url.host) === bareHost(new URL(siteUrl).host)
   if (!onSite && url.protocol !== `${APP_SCHEME}:`) return null
 
   const [section, segment, ...rest] = pathSegments(url)

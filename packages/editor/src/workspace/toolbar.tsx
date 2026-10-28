@@ -89,7 +89,11 @@ export function Toolbar({
   const { label, color, globe, hint } = STATUSES[status]
   const statusLabel = (
     <span className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex" aria-live="polite">
-      {globe ? <GlobeIcon className={cn("size-3", color)} /> : <span className={cn("size-1.5 rounded-full bg-current", color)} />}
+      {globe ? (
+        <GlobeIcon className={cn("size-3", color)} />
+      ) : (
+        <span className={cn("size-1.5 rounded-full bg-current", color)} />
+      )}
       {label}
     </span>
   )

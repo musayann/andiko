@@ -39,10 +39,11 @@ interface ShareDialogProps {
   flush: () => Promise<void>
 }
 
-const copyText = (text: string) => navigator.clipboard.writeText(text).then(
-  () => true,
-  () => false,
-)
+const copyText = (text: string) =>
+  navigator.clipboard.writeText(text).then(
+    () => true,
+    () => false,
+  )
 
 const POLICY_LINK = "underline underline-offset-2 hover:text-foreground"
 
