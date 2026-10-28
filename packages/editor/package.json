@@ -1,0 +1,49 @@
+{
+  "name": "@andiko/editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./hooks/*": "./src/hooks/*.ts",
+    "./*": "./src/*.tsx"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@andiko/core": "workspace:*",
+    "@andiko/ui": "workspace:*",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.13",
+    "@lezer/highlight": "^1.2.5",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-deep-link": "^2.6.2",
+    "@uiw/react-codemirror": "^4.25.12",
+    "dexie-react-hooks": "^4.4.0",
+    "lucide-react": "^1.48.0",
+    "radix-ui": "^1.6.7",
+    "react-resizable-panels": "^4.14.1",
+    "sonner": "^2.0.8"
+  },
+  "devDependencies": {
+    "@andiko/config": "workspace:*",
+    "@types/node": "^24.19.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "next": "16.3.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "next": "^16",
+    "react": "^19",
+    "react-dom": "^19"
+  }
+}
