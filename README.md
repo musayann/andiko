@@ -20,14 +20,14 @@ A local-first Markdown editor with live preview and PDF export, on the web and a
 
 ## Getting started
 
-Requires Node 20.9+ and pnpm.
+Requires Node 20.12+ and pnpm.
 
 ```bash
 pnpm install        # also downloads Chrome for local PDF export (puppeteer)
 pnpm dev            # the website, at http://localhost:3000
 ```
 
-Configuration is optional. Copy `apps/web/.env.sample` to `apps/web/.env.local` to enable sharing (`DATABASE_URL`) or to change the other settings it lists.
+Configuration is optional. Copy `.env.sample` to `.env` at the repo root to enable sharing (`DATABASE_URL`) or to change the other settings it lists. Both apps read it when they start, so restart `pnpm dev` or `pnpm dev:desktop` after changing it; a value in `apps/<app>/.env.local` overrides it for that app only. It's for local development: deployments and the release workflow set their own variables.
 
 The first visit seeds a "Welcome" document that shows every supported feature.
 
@@ -49,7 +49,7 @@ The Mac app's SQLite store has Rust tests: `cargo test --manifest-path apps/desk
 
 ## Mac app
 
-`apps/desktop` wraps the editor in [Tauri](https://tauri.app). Its frontend is a static export of the same components, loaded from disk, so documents stay on the Mac and editing works offline. They are kept in a SQLite database at `~/Library/Application Support/app.andiko.desktop/andiko.db`, where Time Machine backs them up, together with the open tabs and the key to your published documents (`pnpm dev:desktop` uses `andiko-dev.db` next to it). On first launch, the app moves in what earlier versions kept in WebKit's storage. Documents open in tabs (<kbd>⌘</kbd><kbd>T</kbd> new, <kbd>⌘</kbd><kbd>W</kbd> close, <kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd>, <kbd>⌘</kbd><kbd>L</kbd> opens a shared link in a tab). Links to the site in a document open in a tab too, and the app handles the `andiko://` scheme: `andiko://s/<slug>-<id>` opens what `https://andiko.app/s/<slug>-<id>` shows (macOS registers it when the app is installed, so it doesn't reach `pnpm dev:desktop`). Sharing and the PDF fallback call the website's API at `NEXT_PUBLIC_SITE_URL`; PDF export otherwise uses the system print dialog. Its Help menu opens that site, the project's GitHub issues, and the site's privacy policy and terms of use (Help → Privacy Policy); its Report link on shared documents writes to `NEXT_PUBLIC_CONTACT_EMAIL`, which the release build reads from the repo's Actions variable of the same name. Building it needs Rust (`cargo`).
+`apps/desktop` wraps the editor in [Tauri](https://tauri.app). Its frontend is a static export of the same components, loaded from disk, so documents stay on the Mac and editing works offline. They are kept in a SQLite database at `~/Library/Application Support/app.andiko.desktop/andiko.db`, where Time Machine backs them up, together with the open tabs and the key to your published documents (`pnpm dev:desktop` uses `andiko-dev.db` next to it). On first launch, the app moves in what earlier versions kept in WebKit's storage. Documents open in tabs (<kbd>⌘</kbd><kbd>T</kbd> new, <kbd>⌘</kbd><kbd>W</kbd> close, <kbd>⌘</kbd><kbd>1</kbd>–<kbd>9</kbd>, <kbd>⌘</kbd><kbd>L</kbd> opens a shared link in a tab). Links to the site in a document open in a tab too, and the app handles the `andiko://` scheme: `andiko://s/<slug>-<id>` opens what `https://andiko.app/s/<slug>-<id>` shows (macOS registers it when the app is installed, so it doesn't reach `pnpm dev:desktop`). Sharing and the PDF fallback call the website's API at `NEXT_PUBLIC_SITE_URL`; PDF export otherwise uses the system print dialog. Its Help menu opens that site, the project's GitHub issues, and the site's privacy policy and terms of use (Help → Privacy Policy); its Report link on shared documents writes to `NEXT_PUBLIC_CONTACT_EMAIL`, which the release build reads from the repo's Actions variable of the same name. `pnpm dev:desktop` and local builds read both from the root `.env`; the app's CSP only allows `https://andiko.app`, so keep any other `NEXT_PUBLIC_SITE_URL` in `apps/web/.env.local`. Building it needs Rust (`cargo`).
 
 Every push to `main` is released: the [Desktop macOS build](.github/workflows/desktop-macos.yml) workflow publishes a universal `.dmg` (Apple Silicon and Intel) to [Releases](https://github.com/musayann/andiko/releases), versioned `<major.minor>.<run number>` from `apps/desktop/package.json`. It is ad-hoc signed, not notarized: on first launch, allow it in System Settings → Privacy & Security → Open Anyway (or run `xattr -dr com.apple.quarantine /Applications/Andiko.app`). After that the app updates itself: it checks the latest release's `latest.json` at launch and every few hours (or from Andiko → Check for Updates…), installs a newer version in the background and offers to restart. Updates are signed with a key kept in the repo's `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` secrets, whose public half is `plugins.updater.pubkey` in `tauri.conf.json`; installed apps only accept updates signed with it, so losing the key means they can't update again.
 
@@ -61,7 +61,7 @@ Canonical links, the sitemap, `robots.txt` and Open Graph images use `https://an
 
 Sharing needs a Postgres database. Set `DATABASE_URL` (for example Neon or Supabase on Vercel, or `postgres://postgres:pg@localhost:5432/postgres` after `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=pg postgres`). The `shares` table is created on first use. Without `DATABASE_URL` the Share button is hidden and everything else works as before.
 
-The privacy policy (`/privacy`) and terms (`/terms`) name whoever runs the instance, so they are only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are set; `.env.sample` lists the optional details. The contact email also adds a Report link to shared pages. The policy names Vercel and Neon as providers, and both pages describe the Mac app released from this repo, so edit `apps/web/src/app/privacy/page.tsx` and `apps/web/src/app/terms/page.tsx` if you host elsewhere or don't ship the app.
+The privacy policy (`/privacy`) and terms (`/terms`) name whoever runs the instance, so they are only published when `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_DATABASE_REGION` are set; the root `.env.sample` lists the optional details. The contact email also adds a Report link to shared pages. The policy names Vercel and Neon as providers, and both pages describe the Mac app released from this repo, so edit `apps/web/src/app/privacy/page.tsx` and `apps/web/src/app/terms/page.tsx` if you host elsewhere or don't ship the app.
 
 On Vercel, set the project's Root Directory to `apps/web`.
 

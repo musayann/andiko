@@ -1,6 +1,12 @@
+import { existsSync } from "node:fs"
 import path from "node:path"
 
 import type { NextConfig } from "next"
+
+// the repo's shared .env (see .env.sample). Next has already loaded this app's own
+// .env* files, and loadEnvFile keeps values that are set, so those win over it.
+const rootEnv = path.join(__dirname, "../../.env")
+if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 
 const nextConfig: NextConfig = {
   // trace from the repo root, so serverless functions can ship files from packages/

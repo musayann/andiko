@@ -1,4 +1,12 @@
+import { existsSync } from "node:fs"
+import path from "node:path"
+
 import type { NextConfig } from "next"
+
+// the repo's shared .env (see .env.sample). Next has already loaded this app's own
+// .env* files, and loadEnvFile keeps values that are set, so those win over it.
+const rootEnv = path.join(__dirname, "../../.env")
+if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 
 // The Tauri app loads this build from disk (out/): no server, so a static export.
 const nextConfig: NextConfig = {
