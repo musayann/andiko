@@ -123,7 +123,8 @@ export function TabBar({ tabs, active, onNew, onOpenLink }: TabBarProps) {
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
   const { isMobile, state } = useSidebar()
-  // with no sidebar beside it, the tab bar reaches the window's corner, under the traffic lights
+  // with no sidebar beside it, the tab bar reaches the window's corner, under the traffic lights:
+  // it makes room for them and drops its tabs by the inset's usual 8px margin to stay level with them
   const clearTrafficLights = useTrafficLights() && (isMobile || state === "collapsed")
 
   const endDrag = () => {
@@ -136,8 +137,8 @@ export function TabBar({ tabs, active, onNew, onOpenLink }: TabBarProps) {
     <div
       data-tauri-drag-region="deep"
       className={cn(
-        "flex h-11 shrink-0 items-center gap-1 border-b bg-muted/40 px-2 transition-[padding] duration-200 ease-linear",
-        clearTrafficLights && "pl-22",
+        "flex h-11 shrink-0 items-center gap-1 border-b bg-muted/40 px-2 transition-[padding,height] duration-200 ease-linear",
+        clearTrafficLights && "h-13 pt-2 pl-22",
       )}
       onDragEnd={endDrag}
       onContextMenu={(event) => {
