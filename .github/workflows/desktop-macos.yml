@@ -58,6 +58,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           NEXT_TELEMETRY_DISABLED: "1"
+          # where the Report link on shared documents writes to, as on the website; unset leaves it out
+          NEXT_PUBLIC_CONTACT_EMAIL: ${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
 
       # installed apps read latest.json from the latest release (plugins.updater in tauri.conf.json);
       # the universal archive serves both architectures

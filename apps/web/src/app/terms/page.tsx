@@ -15,8 +15,10 @@ import { MAX_SHARES_PER_OWNER } from "@/lib/share/store"
 // The page's text is CC BY-SA 4.0, as its sources require; the code stays MIT.
 // Keep it in step with what the app does: the share limits come from packages/core/src/share/, and
 // the Report link in packages/editor/src/shared/shared-document.tsx asks for the notice contents.
+// The Mac app links here too (legalLinks in packages/core/src/site.ts): its section follows how it
+// is released (.github/workflows/desktop-macos.yml) and updates itself (packages/editor/src/desktop/updates.ts).
 
-const UPDATED = "9 October 2026"
+const UPDATED = "29 October 2026"
 
 /** Languages we answer in (DSA Art. 11-12). An operator outside English-speaking countries adds their own. */
 const CONTACT_LANGUAGES = "English"
@@ -38,7 +40,8 @@ export default function TermsPage() {
       <h2>In short</h2>
       <ul>
         <li>
-          {siteName} is a free Markdown editor. Your documents are saved in your browser, and keeping them is up to you.
+          {siteName} is a free Markdown editor, on the web and as a Mac app. Your documents are saved in your browser or
+          on your Mac, and keeping them is up to you.
         </li>
         <li>
           You keep your rights in what you share, and you are responsible for it. Don’t share anything illegal or
@@ -61,30 +64,48 @@ export default function TermsPage() {
           <>This instance of {siteName}</>
         )}{" "}
         is run by {operatorName} (“we”). These terms are an agreement between you and {operatorName}: by using{" "}
-        {siteName}, and in particular by sharing a document, you agree to them. How we handle personal data is described
-        in the <Link href="/privacy">privacy policy</Link>.
+        {siteName}, including the Mac app, and in particular by sharing a document, you agree to them. How we handle
+        personal data is described in the <Link href="/privacy">privacy policy</Link>.
       </p>
       <OperatorDetails name={operatorName} address={operatorAddress} registration={operatorRegistration} />
 
       <h2>What we provide</h2>
       <p>
-        {siteName} is a Markdown editor that runs in your browser. It is free and needs no account. You can write and
-        organise documents, export them as Markdown, PDF or a .zip file, and share a document through a public link.
+        {siteName} is a Markdown editor that runs in your browser, and as an app for macOS. It is free and needs no
+        account. You can write and organise documents, export them as Markdown, PDF or a .zip file, and share a document
+        through a public link.
       </p>
       <p>
-        The source code is <a href={repoUrl}>open source</a> under the MIT License. These terms cover this website, not
-        what you do with the code.
+        The source code is <a href={repoUrl}>open source</a> under the MIT License, and the Mac app we publish is built
+        from it. These terms cover this website and the online features the Mac app uses (sharing, opening shared
+        documents, creating PDFs and updates), not what you do with the code.
       </p>
 
       <h2>Your documents</h2>
       <p>
-        Your documents are saved in your browser. We keep no copy of a document unless you share it, and we cannot back
-        up or recover your documents: clearing your browser’s data, losing your device or switching browsers can lose
-        them for good. You are responsible for exporting anything you want to keep.
+        Your documents are saved in your browser, or on your Mac in the Mac app. We keep no copy of a document unless
+        you share it, and we cannot back up or recover your documents: clearing your browser’s data or the app’s, losing
+        your device or switching browsers can lose them for good. You are responsible for exporting anything you want to
+        keep.
       </p>
       <p>
-        When you export a PDF, your document is sent to our server, and you allow us to process it there only to create
-        the PDF, which we don’t keep.
+        When you export a PDF on the website, or the Mac app can’t create it itself, your document is sent to our
+        server, and you allow us to process it there only to create the PDF, which we don’t keep.
+      </p>
+
+      <h2>The Mac app</h2>
+      <p>
+        Download the Mac app only from our <a href={`${repoUrl}/releases`}>releases on GitHub</a>. It is not notarised
+        by Apple, so macOS asks you to allow it the first time you open it.
+      </p>
+      <p>
+        The app keeps your documents in a database on your Mac, which Time Machine backs up if you use it, but which we
+        can’t recover. Writing works offline, while sharing and opening shared documents need an internet connection.
+        Where these terms say “browser”, in the app they mean the app on your Mac.
+      </p>
+      <p>
+        The app checks for updates and installs them automatically. Updates are signed, and the app installs only those
+        signed by us. They may change its features, as described under “Availability and changes to the service”.
       </p>
 
       <h2>Sharing a document</h2>
@@ -181,14 +202,16 @@ export default function TermsPage() {
       <p>
         {siteName} is free, and we don’t guarantee that it will be available, keep working the same way, or keep shared
         documents online. We may change its features and limits, remove shared documents as these terms describe, or
-        stop running it. If we stop, we will say so on the site beforehand where we can.
+        stop running it. If we stop, we will say so on the site beforehand where we can. The Mac app would still open
+        and edit the documents on your Mac, but could no longer share documents or open shared ones.
       </p>
 
       <h2>Liability</h2>
       <p>
-        {siteName} is provided free of charge and, as far as the law allows, “as is”, without any warranty: for example,
-        that it is free of errors, fit for a particular purpose, or that documents, links and PDFs will be accurate,
-        available or kept. We are not responsible for other websites that documents link to or load images from.
+        {siteName}, including the Mac app and its updates, is provided free of charge and, as far as the law allows, “as
+        is”, without any warranty: for example, that it is free of errors, fit for a particular purpose, or that
+        documents, links and PDFs will be accurate, available or kept. We are not responsible for other websites that
+        documents link to or load images from.
       </p>
       <p>
         As far as the law allows, we are not liable for loss or damage from using or being unable to use {siteName},

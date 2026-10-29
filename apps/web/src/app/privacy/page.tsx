@@ -10,18 +10,21 @@ import { LegalPage, OperatorDetails } from "@/components/legal-page"
 // established and whom it targets, and an article reference reads as accepting that law.
 // Keep it in step with what the code stores: packages/core/src/db.ts, packages/core/src/share/, the cookies in
 // packages/core/src/db.ts and packages/ui/src/components/sidebar.tsx, the localStorage keys prefixed "andiko:",
-// and the remote images that src/lib/security/shared-page-policy.ts allows.
+// and the remote images that src/lib/security/shared-page-policy.ts allows. The Mac app links here too
+// (legalLinks in packages/core/src/site.ts), so also keep it in step with its database
+// (apps/desktop/src-tauri/src/store.rs, packages/core/src/store/sqlite.ts), its saved public copies
+// (packages/core/src/share/public.ts) and its updates (packages/editor/src/desktop/updates.ts).
 // The operator details come from NEXT_PUBLIC_* settings (packages/core/src/site.ts); the hosting
 // providers named below are the ones this project is built for (Vercel and Neon), and the
 // 30-day limits are the longest log retention and restore history those providers offer.
 // Neon's data processing agreement covers every plan, but Vercel's only covers Pro and
 // Enterprise, so the policy claims none for Vercel and stays true on the Hobby plan.
 
-const UPDATED = "9 October 2026"
+const UPDATED = "29 October 2026"
 
 export const metadata: Metadata = {
   title: "Privacy policy",
-  description: `What ${siteName} stores, where, and for how long. Documents are saved in your browser, and only shared ones are stored on our server.`,
+  description: `What ${siteName} stores, where, and for how long. Documents are saved in your browser or on your Mac, and only shared ones are stored on our server.`,
   alternates: { canonical: "/privacy" },
 }
 
@@ -36,12 +39,14 @@ export default function PrivacyPage() {
     <LegalPage title="Privacy policy" updated={UPDATED}>
       <h2>In short</h2>
       <ul>
-        <li>Your documents are saved in your browser.</li>
+        <li>Your documents are saved in your browser, or on your Mac if you use the Mac app.</li>
         <li>
           A document reaches our server only when you <strong>share</strong> it (it is stored until you stop sharing) or{" "}
-          <strong>export it as a PDF</strong> (it is processed and discarded).
+          <strong>export it as a PDF</strong> on the website (it is processed and discarded). The Mac app makes PDFs on
+          your Mac.
         </li>
         <li>Images that a document includes from other websites are loaded from those websites.</li>
+        <li>The Mac app checks GitHub for updates.</li>
         <li>There are no accounts, ads, analytics or tracking cookies, and we don’t sell data.</li>
       </ul>
 
@@ -78,6 +83,44 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>All of these are needed for the app to work as you’d expect, so we don’t ask for consent to store them.</p>
+
+      <h2>The Mac app</h2>
+      <p>
+        The Mac app works like the website, except as described here. Where this policy says “your browser”, in the app
+        it means the app on your Mac. Links in the app open in your default browser or email app, except links to{" "}
+        {siteName} documents, which open in a tab.
+      </p>
+      <h3>On your Mac</h3>
+      <p>
+        The app keeps your documents and folders, their undo history, the open tabs, the last document you opened and
+        the owner key in a database in <code>~/Library/Application Support/app.andiko.desktop/</code>, which Time
+        Machine backs up if you use it. Its preferences, and edits not yet saved when it closes, are kept in the app’s
+        own web storage in <code>~/Library/WebKit/app.andiko.desktop/</code>. Versions of the app before the database
+        kept your documents there too: the app copies them into the database the first time it starts and leaves the old
+        copy in place.
+      </p>
+      <p>
+        Deleting the app doesn’t delete any of this. To remove it all, quit the app and delete both folders. The app’s
+        cookies are never sent to our server.
+      </p>
+      <h3>Shared documents you open</h3>
+      <p>
+        When you open a shared document in the app, from a link or with “Open Shared Link”, the app fetches it from our
+        server, which records the request like any other (see “Technical logs” below). The app keeps the latest copy it
+        fetched in its database, so the document still opens offline. That copy is replaced each time the app fetches
+        the document again, and deleted when the app finds that the document is no longer shared.
+      </p>
+      <h3>PDFs</h3>
+      <p>
+        The app makes PDFs on your Mac, with the system’s print dialog. Only if that fails does it send the document to
+        our server, as described under “PDF export” below.
+      </p>
+      <h3>Updates</h3>
+      <p>
+        When it starts and every few hours, the app checks GitHub, where it is published, for a new version, and
+        downloads and installs it. Like any website, GitHub sees your IP address and the details of each request, and
+        handles them under its own privacy statement. The check sends nothing about you or your documents.
+      </p>
 
       <h2>What reaches our server</h2>
       <p>Sharing and PDF export are optional. Everything else works without sending your documents to our server.</p>
@@ -146,6 +189,10 @@ export default function PrivacyPage() {
           interests).
         </li>
         <li>
+          <strong>To keep the Mac app up to date</strong>: checking for and installing updates, which fix problems and
+          security issues (legitimate interests).
+        </li>
+        <li>
           <strong>To moderate shared documents</strong>: reviewing reported documents, and others when we need to keep
           the service safe, and using the fingerprint to find the other documents of someone who keeps sharing illegal
           content (our legal obligations, or otherwise our legitimate interest in keeping the service lawful).
@@ -170,11 +217,14 @@ export default function PrivacyPage() {
         <li>
           <strong>Our email provider</strong> receives and stores the emails you send us.
         </li>
+        <li>
+          <strong>GitHub</strong> hosts the Mac app’s downloads and updates.
+        </li>
       </ul>
       <p>
-        Vercel and Neon are based in the United States, so their staff may access data from there. Neon processes it
-        only on our instructions, under a data processing agreement that includes the EU Standard Contractual Clauses.
-        Vercel and our email provider handle it under their own terms and privacy policies.
+        Vercel, Neon and GitHub are based in the United States, so their staff may access data from there. Neon
+        processes it only on our instructions, under a data processing agreement that includes the EU Standard
+        Contractual Clauses. Vercel, GitHub and our email provider handle it under their own terms and privacy policies.
       </p>
       <p>
         Apart from these providers, we give data to authorities only when the law requires it, or when a shared document

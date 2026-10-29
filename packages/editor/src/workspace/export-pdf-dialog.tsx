@@ -5,6 +5,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { downloadPdf, type PaperSize } from "@andiko/core/export"
+import { IS_DESKTOP_BUILD } from "@andiko/core/platform"
 import { Button } from "@andiko/ui/components/button"
 import { Checkbox } from "@andiko/ui/components/checkbox"
 import {
@@ -49,8 +50,18 @@ export function ExportPdfDialog({ open, onOpenChange, content, title }: ExportPd
         <DialogHeader>
           <DialogTitle>Export PDF</DialogTitle>
           <DialogDescription>
-            Downloads “{title}” as a PDF with selectable text. The document is sent to our server to create the PDF, and
-            isn’t kept there.
+            {/* the desktop app prints locally and only falls back to the server (see downloadPdf) */}
+            {IS_DESKTOP_BUILD ? (
+              <>
+                Saves “{title}” as a PDF from the print dialog, on your Mac. Only if that fails is the document sent to
+                our server to create the PDF, and it isn’t kept there.
+              </>
+            ) : (
+              <>
+                Downloads “{title}” as a PDF with selectable text. The document is sent to our server to create the PDF,
+                and isn’t kept there.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
