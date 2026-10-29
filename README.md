@@ -20,7 +20,7 @@ A local-first Markdown editor with live preview and PDF export, on the web and a
 
 ## Getting started
 
-Requires Node 20.12+ and pnpm.
+Requires Node 24 (24.22.1 or newer) and pnpm. `.nvmrc` names the version, so `nvm use` picks it up.
 
 ```bash
 pnpm install        # also downloads Chrome for local PDF export (puppeteer)

@@ -23,7 +23,7 @@ updates:
       prefix: chore
       include: scope
     ignore:
-      # follows the Node version CI and Vercel run (node-version: 24 in the workflows)
+      # follows the Node version in .nvmrc (CI) and engines.node (Vercel)
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
     # an update goes to the first group it matches; majors outside the named groups get their own PR
