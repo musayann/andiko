@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import type { ShareSyncState } from "@andiko/core/hooks/use-share-status"
 import { publishDoc, shareUrl, unpublishDocs } from "@andiko/core/share/client"
-import { privacyPolicy } from "@andiko/core/site"
+import { legalLinks } from "@andiko/core/site"
 import { Button } from "@andiko/ui/components/button"
 import {
   Dialog,
@@ -104,11 +104,11 @@ export function ShareDialog({
             {shareId
               ? "Anyone with the link can read this document. Your edits here update it automatically, and only this browser can edit it or stop sharing it."
               : "Publishing uploads this document so anyone with the link can read it. Your edits here keep the public copy up to date, and only this browser can edit it or stop sharing it. Your other documents aren’t published."}
-            {privacyPolicy && (
+            {legalLinks && (
               <>
                 {/* agreement is tied to the Publish click; the privacy policy is a notice, linked from the sidebar */}
                 {shareId ? " By sharing, you agreed to the " : " By publishing, you agree to the "}
-                <a href="/terms" target="_blank" rel="noopener" className={POLICY_LINK}>
+                <a href={legalLinks.terms} target="_blank" rel="noopener" className={POLICY_LINK}>
                   terms of use
                 </a>
                 .

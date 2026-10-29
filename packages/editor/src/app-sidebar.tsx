@@ -37,9 +37,8 @@ import {
   type DocSummary,
   type FolderNode,
 } from "@andiko/core/folders"
-import { IS_DESKTOP_BUILD } from "@andiko/core/platform"
 import { shareUrl, unpublishDocs } from "@andiko/core/share/client"
-import { privacyPolicy } from "@andiko/core/site"
+import { legalLinks } from "@andiko/core/site"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -491,14 +490,14 @@ export function AppSidebar() {
             Export all as .zip
           </button>
         </div>
-        {privacyPolicy && !IS_DESKTOP_BUILD && (
+        {legalLinks && (
           <>
             <SidebarSeparator />
             <nav aria-label="Legal" className="flex gap-3 px-2 pb-1 text-[11px] text-muted-foreground/80">
-              <Link href="/privacy" className={LEGAL_LINK}>
+              <Link href={legalLinks.privacy} className={LEGAL_LINK}>
                 Privacy
               </Link>
-              <Link href="/terms" className={LEGAL_LINK}>
+              <Link href={legalLinks.terms} className={LEGAL_LINK}>
                 Terms
               </Link>
             </nav>
