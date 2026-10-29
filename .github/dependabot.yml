@@ -1,0 +1,77 @@
+# Version updates run on the schedule below. Security updates (Settings → Code security →
+# Dependabot security updates) open as soon as an advisory lands, skip the schedule and the
+# cooldown, and use the labels and commit-message set here.
+#
+# Security updates are left ungrouped on purpose: each fix gets its own PR, so a critical one
+# never waits on an unrelated update that breaks CI.
+version: 2
+updates:
+  # every workspace package (apps/*, packages/*) through the root pnpm-lock.yaml
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # a release has to be this old before a version update picks it up, which keeps a
+    # hijacked publish that gets pulled within days out of the lockfile
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      # follows the Node version CI and Vercel run (node-version: 24 in the workflows)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    # an update goes to the first group it matches; majors outside the named groups get their own PR
+    groups:
+      # pinned to the same version in every package, eslint-config-next along with next
+      next:
+        patterns: [next, eslint-config-next]
+      react:
+        patterns: [react, react-dom, "@types/react", "@types/react-dom"]
+      # tauri build stops when these and the crates in apps/desktop/src-tauri differ in
+      # major.minor, so merge this together with the cargo tauri PR
+      tauri:
+        patterns: ["@tauri-apps/*"]
+      codemirror:
+        patterns: ["@codemirror/*", "@lezer/*", "@uiw/react-codemirror"]
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # the desktop app's crates
+  - package-ecosystem: cargo
+    directory: /apps/desktop/src-tauri
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      tauri:
+        patterns: [tauri, "tauri-*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # the actions in .github/workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
