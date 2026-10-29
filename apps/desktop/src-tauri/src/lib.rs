@@ -1,5 +1,5 @@
 use tauri::{
-    menu::{Menu, MenuItemBuilder, SubmenuBuilder},
+    menu::{Menu, MenuItemBuilder, SubmenuBuilder, HELP_SUBMENU_ID},
     AppHandle, Emitter, Manager, Wry,
 };
 use tauri_plugin_deep_link::DeepLinkExt;
@@ -57,7 +57,17 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let view = SubmenuBuilder::new(app, "View").fullscreen().build()?;
     let window = SubmenuBuilder::new(app, "Window").minimize().maximize().build()?;
 
-    Menu::with_items(app, &[&app_menu, &file, &edit, &tabs, &view, &window])
+    // the page opens these in the browser (see HELP_LINKS in packages/editor/src/desktop/desktop-shell.tsx);
+    // with this id, set_menu registers it as the Help menu, which macOS gives a search field
+    let help = SubmenuBuilder::with_id(app, HELP_SUBMENU_ID, "Help")
+        .item(&MenuItemBuilder::with_id("website", "Andiko Website").build(app)?)
+        .item(&MenuItemBuilder::with_id("report-issue", "Report an Issue…").build(app)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("privacy-policy", "Privacy Policy").build(app)?)
+        .item(&MenuItemBuilder::with_id("terms-of-use", "Terms of Use").build(app)?)
+        .build()?;
+
+    Menu::with_items(app, &[&app_menu, &file, &edit, &tabs, &view, &window, &help])
 }
 
 /// Opens the system print dialog for the page, whose PDF button saves offline.

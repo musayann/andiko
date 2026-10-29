@@ -106,7 +106,8 @@ export function ShareDialog({
               : "Publishing uploads this document so anyone with the link can read it. Your edits here keep the public copy up to date, and only this browser can edit it or stop sharing it. Your other documents aren’t published."}
             {legalLinks && (
               <>
-                {/* agreement is tied to the Publish click; the privacy policy is a notice, linked from the sidebar */}
+                {/* agreement is tied to the Publish click; the privacy policy is a notice, linked from the sidebar
+                    (the Help menu in the desktop app) */}
                 {shareId ? " By sharing, you agreed to the " : " By publishing, you agree to the "}
                 <a href={legalLinks.terms} target="_blank" rel="noopener" className={POLICY_LINK}>
                   terms of use

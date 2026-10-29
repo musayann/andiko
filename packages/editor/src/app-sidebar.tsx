@@ -37,6 +37,7 @@ import {
   type DocSummary,
   type FolderNode,
 } from "@andiko/core/folders"
+import { IS_DESKTOP_BUILD } from "@andiko/core/platform"
 import { shareUrl, unpublishDocs } from "@andiko/core/share/client"
 import { legalLinks } from "@andiko/core/site"
 import {
@@ -490,7 +491,8 @@ export function AppSidebar() {
             Export all as .zip
           </button>
         </div>
-        {legalLinks && (
+        {/* the desktop app links them from its Help menu instead (see HELP_LINKS in desktop/desktop-shell.tsx) */}
+        {legalLinks && !IS_DESKTOP_BUILD && (
           <>
             <SidebarSeparator />
             <nav aria-label="Legal" className="flex gap-3 px-2 pb-1 text-[11px] text-muted-foreground/80">

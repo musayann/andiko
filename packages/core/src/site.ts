@@ -48,9 +48,10 @@ export const privacyPolicy = (() => {
 })()
 
 /**
- * Where the privacy policy and terms are linked from the editor. The desktop app has no pages
- * of its own and shares through the public site, so it always links to the site's; on the web
- * they're this instance's own, and null when it doesn't publish them (see privacyPolicy).
+ * Where the privacy policy and terms are linked from: the editor's sidebar on the web, the Help menu in
+ * the desktop app (HELP_LINKS in packages/editor/src/desktop/desktop-shell.tsx), and the share dialog in
+ * both. The desktop app has no pages of its own and shares through the public site, so it always links to
+ * the site's; on the web they're this instance's own, and null when it doesn't publish them (see privacyPolicy).
  */
 export const legalLinks = IS_DESKTOP_BUILD
   ? { privacy: `${siteUrl}/privacy`, terms: `${siteUrl}/terms` }

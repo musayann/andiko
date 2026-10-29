@@ -6,7 +6,9 @@ import { toast } from "sonner"
 
 import { createDraft, getDoc, getDocs, resolveStartDoc } from "@andiko/core/db"
 import { printDocument } from "@andiko/core/export"
+import { openExternal } from "@andiko/core/platform"
 import { parseAndikoLink } from "@andiko/core/share/public"
+import { legalLinks, repoUrl, siteUrl } from "@andiko/core/site"
 import {
   closeTab,
   closeTabs,
@@ -27,6 +29,14 @@ import { TabBar } from "./tab-bar"
 import { checkForUpdates, useUpdates } from "./updates"
 
 const SELECT_TAB = /^select-tab-([1-9])$/
+
+/** The Help menu's links (see src-tauri/src/lib.rs), opened in the browser. */
+const HELP_LINKS: Record<string, string | undefined> = {
+  website: siteUrl,
+  "report-issue": `${repoUrl}/issues/new`,
+  "privacy-policy": legalLinks?.privacy,
+  "terms-of-use": legalLinks?.terms,
+}
 
 /** Opens the document tabs from last time, dropping those whose document is gone; a first run gets the start document. */
 async function restoreTabs() {
@@ -56,6 +66,7 @@ function useMenuEvents(onOpenLink: () => void) {
 
     const handle = (id: string) => {
       const select = SELECT_TAB.exec(id)
+      const helpLink = HELP_LINKS[id]
       if (select) selectTabNumber(Number(select[1]))
       else if (id === "new-tab") newDocumentTab()
       else if (id === "open-link") onOpenLink()
@@ -66,6 +77,7 @@ function useMenuEvents(onOpenLink: () => void) {
       else if (id === "previous-tab") cycleTab(-1)
       else if (id === "print") printActiveDocument().catch(() => toast.error("Could not print the document"))
       else if (id === "check-updates") void checkForUpdates(true)
+      else if (helpLink) void openExternal(helpLink)
     }
 
     void import("@tauri-apps/api/event").then(async ({ listen }) => {
