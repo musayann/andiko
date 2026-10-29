@@ -31,6 +31,10 @@
   "plugins": {
     "deep-link": {
       "desktop": { "schemes": ["andiko"] }
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI0MzlDMjREQTA5MTg5RDIKUldUU2laR2dUY0k1dElPVGZpeCttK296eWZ1WmNNeDhPMnBSRWtCUVIvdGdIM2FJS3JFcVgxeSsK",
+      "endpoints": ["https://github.com/musayann/andiko/releases/latest/download/latest.json"]
     }
   },
   "bundle": {

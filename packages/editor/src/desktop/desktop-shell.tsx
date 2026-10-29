@@ -24,6 +24,7 @@ import { openAndikoLink, openLink } from "./links"
 import { OpenLinkDialog } from "./open-link-dialog"
 import { PublicTab } from "./public-tab"
 import { TabBar } from "./tab-bar"
+import { checkForUpdates, useUpdates } from "./updates"
 
 const SELECT_TAB = /^select-tab-([1-9])$/
 
@@ -64,6 +65,7 @@ function useMenuEvents(onOpenLink: () => void) {
       } else if (id === "next-tab") cycleTab(1)
       else if (id === "previous-tab") cycleTab(-1)
       else if (id === "print") printActiveDocument().catch(() => toast.error("Could not print the document"))
+      else if (id === "check-updates") void checkForUpdates(true)
     }
 
     void import("@tauri-apps/api/event").then(async ({ listen }) => {
@@ -188,6 +190,7 @@ export function DesktopShell() {
   useFileDropGuard()
   useContextMenuGuard()
   useDeepLinks()
+  useUpdates()
 
   useEffect(() => {
     restoreTabs()

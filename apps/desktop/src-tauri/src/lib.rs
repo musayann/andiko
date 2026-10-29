@@ -16,6 +16,8 @@ fn item(app: &AppHandle, id: &str, label: &str, accelerator: &str) -> tauri::Res
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let app_menu = SubmenuBuilder::new(app, "Andiko")
         .about(None)
+        // see checkForUpdates in packages/editor/src/desktop/updates.ts
+        .item(&MenuItemBuilder::with_id("check-updates", "Check for Updates…").build(app)?)
         .separator()
         .services()
         .separator()
@@ -71,6 +73,8 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             print_page,
             store::store_load,

@@ -5,10 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# a newer push to main supersedes a build still running
+# every push to main is a release, so builds queue instead of cancelling one mid-publish
 concurrency:
   group: desktop-macos-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   ci:
@@ -19,6 +19,8 @@ jobs:
     needs: ci
     runs-on: macos-26
     timeout-minutes: 60
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
 
@@ -40,16 +42,38 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # beforeBuildCommand runs the Next.js static export first
-      - name: Build universal .dmg
-        run: pnpm --filter @andiko/desktop tauri build --target universal-apple-darwin --bundles dmg
+      # major.minor from apps/desktop/package.json, then the run number, so each release is newer
+      - name: Set version
+        run: echo "VERSION=$(jq -r .version apps/desktop/package.json | cut -d. -f1,2).${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      # beforeBuildCommand runs the Next.js static export first. The updater archive
+      # (Andiko.app.tar.gz and its .sig) is only made here, where the signing key is
+      - name: Build universal .app and .dmg
+        run: >-
+          pnpm --filter @andiko/desktop tauri build --target universal-apple-darwin --bundles app,dmg
+          --config "{\"version\":\"$VERSION\",\"bundle\":{\"createUpdaterArtifacts\":true}}"
         env:
           # ad-hoc signature: no Apple account needed, Gatekeeper asks once (Open Anyway)
           APPLE_SIGNING_IDENTITY: "-"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           NEXT_TELEMETRY_DISABLED: "1"
 
-      - uses: actions/upload-artifact@v7
-        with:
-          name: andiko-macos-universal-${{ github.sha }}
-          path: apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
-          if-no-files-found: error
+      # installed apps read latest.json from the latest release (plugins.updater in tauri.conf.json);
+      # the universal archive serves both architectures
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bundle=apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle
+          jq -n \
+            --arg version "$VERSION" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg url "https://github.com/${{ github.repository }}/releases/download/v$VERSION/Andiko.app.tar.gz" \
+            --arg signature "$(cat "$bundle/macos/Andiko.app.tar.gz.sig")" \
+            '{version: $version, pub_date: $pub_date, platforms: {
+              "darwin-aarch64": {url: $url, signature: $signature},
+              "darwin-x86_64": {url: $url, signature: $signature}
+            }}' > latest.json
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "Andiko $VERSION" --generate-notes --latest \
+            "$bundle"/dmg/*.dmg "$bundle/macos/Andiko.app.tar.gz" "$bundle/macos/Andiko.app.tar.gz.sig" latest.json
