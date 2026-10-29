@@ -14,9 +14,9 @@
     "@andiko/core": "workspace:*",
     "@andiko/editor": "workspace:*",
     "@andiko/ui": "workspace:*",
-    "@fontsource-variable/source-code-pro": "^5.3.0",
-    "@fontsource-variable/source-sans-3": "^5.3.0",
-    "katex": "^0.18.9",
+    "@fontsource-variable/source-code-pro": "^5.3.1",
+    "@fontsource-variable/source-sans-3": "^5.3.1",
+    "katex": "^0.19.0",
     "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@andiko/config": "workspace:*",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^24.19.0",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
