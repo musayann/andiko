@@ -6,6 +6,7 @@ import { insertTable, setHeading } from "@andiko/core/formatting"
 
 import { accelerator, SEPARATOR, showContextMenu, type ContextMenuItem } from "../desktop/context-menu"
 import { BLOCKS, CONTAINERS, EXTRAS, HEADINGS, INLINE, LINES, LINKS, REDO, UNDO, type Action } from "./format-actions"
+import { misspelledWordAt } from "./spelling"
 
 const hasShortcut = (action: Action) => action.keys !== undefined
 
@@ -63,9 +64,13 @@ function editorMenu(view: EditorView): ContextMenuItem[] {
   ]
 }
 
-/** Right-clicking the editor shows its actions in a native menu (desktop app only). */
+/**
+ * Right-clicking the editor shows its actions in a native menu (desktop app only). A misspelled
+ * word gets the system menu instead, which lists the spelling suggestions.
+ */
 export const editorContextMenu = EditorView.domEventHandlers({
   contextmenu: (event, view) => {
+    if (misspelledWordAt(view, event)) return false
     showContextMenu(event, editorMenu(view))
     if (!event.defaultPrevented) return false
     // the native Cut, Copy and Paste act on what has focus, which a click on the gutter doesn't move

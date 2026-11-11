@@ -4,6 +4,7 @@ use tauri::{
 };
 use tauri_plugin_deep_link::DeepLinkExt;
 
+mod spelling;
 mod store;
 
 /// A menu entry the page reacts to (see useMenuEvents in packages/editor/src/desktop/desktop-shell.tsx).
@@ -78,6 +79,8 @@ fn print_page(window: tauri::WebviewWindow) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    spelling::register_defaults();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
@@ -87,6 +90,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             print_page,
+            spelling::misspelled_words,
             store::store_load,
             store::store_get,
             store::store_write

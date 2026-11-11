@@ -144,12 +144,14 @@ function useFileDropGuard() {
 /**
  * Keeps the webview's own menu (Reload, Inspect Element…) from showing on right-click. Places with
  * app actions show a native menu instead (see context-menu.ts); text fields keep their Cut/Copy/Paste.
+ * The editor shows its own menu everywhere but on misspelled words, which keep the system menu's
+ * spelling suggestions (see editor-context-menu.ts).
  */
 function useContextMenuGuard() {
   useEffect(() => {
     const onContextMenu = (event: MouseEvent) => {
       if (event.defaultPrevented) return
-      if (event.target instanceof Element && event.target.closest("input, textarea")) return
+      if (event.target instanceof Element && event.target.closest('input, textarea, [contenteditable="true"]')) return
       // Shift+right-click still reaches Inspect Element while developing
       if (process.env.NODE_ENV === "development" && event.shiftKey) return
       event.preventDefault()
