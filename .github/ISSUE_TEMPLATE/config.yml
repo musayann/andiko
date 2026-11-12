@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/musayann/andiko/discussions
+    about: Ask how something works or share an idea before it becomes a feature request.
+  - name: Report a security vulnerability
+    url: https://github.com/musayann/andiko/security/advisories/new
+    about: Please report vulnerabilities privately, not in public issues.
+  - name: Try Andiko
+    url: https://andiko.app
+    about: The editor, running in your browser.

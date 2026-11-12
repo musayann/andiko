@@ -2,6 +2,29 @@
   "name": "andiko",
   "version": "0.1.0",
   "private": true,
+  "description": "Local-first Markdown editor with live preview, KaTeX, Mermaid, PDF export and share links, on the web and as a Mac app.",
+  "homepage": "https://andiko.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/musayann/andiko.git"
+  },
+  "bugs": {
+    "url": "https://github.com/musayann/andiko/issues"
+  },
+  "keywords": [
+    "markdown",
+    "markdown-editor",
+    "markdown-preview",
+    "markdown-to-pdf",
+    "local-first",
+    "nextjs",
+    "react",
+    "tauri",
+    "macos",
+    "codemirror",
+    "katex",
+    "mermaid"
+  ],
   "license": "MIT",
   "scripts": {
     "dev": "turbo dev --filter=@andiko/web",

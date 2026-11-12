@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a concrete improvement to Andiko
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! For open-ended ideas or questions, [Discussions](https://github.com/musayann/andiko/discussions) is a better place to start.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe what you're trying to do and what gets in the way today.
+      placeholder: When I write long documents, I…
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What would you like to happen?
+      description: How you imagine it working. Mockups or examples from other editors are welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Workarounds you use today, or other ways it could be solved.
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where should it work?
+      multiple: true
+      options:
+        - The website
+        - Mac app

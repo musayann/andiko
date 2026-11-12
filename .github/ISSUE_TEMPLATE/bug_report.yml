@@ -1,0 +1,77 @@
+name: Bug report
+description: Something in Andiko doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please search the [existing issues](https://github.com/musayann/andiko/issues) first to see if it has already been reported.
+
+        Found a security vulnerability? Please **don't** open an issue: report it privately as described in [SECURITY.md](https://github.com/musayann/andiko/blob/main/SECURITY.md).
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it happen?
+      multiple: true
+      options:
+        - andiko.app (the website)
+        - A self-hosted instance
+        - Mac app
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Mac app version
+      description: If it happens in the Mac app, the version shown in Andiko → About Andiko.
+      placeholder: e.g. 0.1.9
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      placeholder: e.g. Firefox 140 on Windows 11, Safari on macOS 26
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a new document
+        2. Paste the Markdown below
+        3. Switch to View mode
+        4. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: Include any error message, and the browser console output if it looks relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: markdown
+    attributes:
+      label: Markdown that reproduces it
+      description: The smallest document that shows the problem, if it depends on the content.
+      render: markdown
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or recording
+      description: Drag images or a short video here.

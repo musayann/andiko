@@ -43,3 +43,6 @@ next-env.d.ts
 
 # turborepo
 .turbo
+
+# AI agent research and plan notes (local only)
+docs/agents/
