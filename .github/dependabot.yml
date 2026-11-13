@@ -19,6 +19,8 @@ updates:
       semver-minor-days: 7
       semver-patch-days: 3
     open-pull-requests-limit: 10
+    labels:
+      - dependencies
     commit-message:
       prefix: chore
       include: scope
@@ -37,8 +39,35 @@ updates:
       # major.minor, so merge this together with the cargo tauri PR
       tauri:
         patterns: ["@tauri-apps/*"]
+      # minor/patch updates for the groups below fall through to minor-and-patch; only majors split out
       codemirror:
         patterns: ["@codemirror/*", "@lezer/*", "@uiw/react-codemirror"]
+        update-types: [major]
+      puppeteer:
+        patterns: [puppeteer, puppeteer-core, "@sparticuz/chromium"]
+        update-types: [major]
+      tailwind:
+        patterns: [tailwindcss, "@tailwindcss/postcss", tw-animate-css]
+        update-types: [major]
+      markdown-it:
+        patterns: [markdown-it, "markdown-it-*", "@vscode/markdown-it-katex"]
+        update-types: [major]
+      dexie:
+        patterns: [dexie, dexie-react-hooks]
+        update-types: [major]
+      tooling:
+        patterns:
+          - eslint
+          - "eslint-config-*"
+          - prettier
+          - turbo
+          - typescript
+          - "@types/*"
+          - vitest
+          - jsdom
+          - "@testing-library/*"
+          - fake-indexeddb
+        update-types: [major]
       minor-and-patch:
         update-types: [minor, patch]
 
@@ -52,12 +81,20 @@ updates:
       semver-major-days: 14
       semver-minor-days: 7
       semver-patch-days: 3
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
     commit-message:
       prefix: chore
       include: scope
     groups:
       tauri:
         patterns: [tauri, "tauri-*"]
+      objc2:
+        patterns: [objc2, "objc2-*"]
+      serde:
+        patterns: [serde, serde_json]
+        update-types: [major]
       minor-and-patch:
         update-types: [minor, patch]
 
@@ -69,6 +106,9 @@ updates:
       day: monday
     cooldown:
       default-days: 7
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
     commit-message:
       prefix: chore
       include: scope
