@@ -65,7 +65,8 @@
     sans-serif,
     "Apple Color Emoji",
     "Segoe UI Emoji";
-  font-size: 16px;
+  /* --md-zoom is the preview's text zoom (see preview-zoom.ts); print and PDF never set it */
+  font-size: calc(16px * var(--md-zoom, 1));
   line-height: 1.6;
   color: var(--md-fg);
   overflow-wrap: break-word;

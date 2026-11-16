@@ -19,6 +19,7 @@ import { ThemeSwitcher } from "@andiko/ui/components/theme-switcher"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/tooltip"
 
 import { useDocNav } from "../hooks/use-doc-nav"
+import { PreviewZoomControl } from "../workspace/zoom-control"
 
 // the preview sanitizes with DOMPurify, which needs the browser's DOM
 const PreviewPane = dynamic(() => import("../workspace/preview-pane").then((mod) => mod.PreviewPane), {
@@ -100,6 +101,7 @@ export function SharedDocument({ id, title, content }: SharedDocumentProps) {
           </>
         )}
         <h1 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">{title}</h1>
+        <PreviewZoomControl />
         {!IS_DESKTOP_BUILD && <ThemeSwitcher className="hidden bg-muted sm:flex" />}
         {/* visitors who only open a shared link see no other page, so the policy and terms are linked here too */}
         {privacyPolicy && !IS_DESKTOP_BUILD && (

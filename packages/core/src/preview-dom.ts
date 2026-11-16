@@ -81,6 +81,35 @@ export function enhancePreview(root: HTMLElement, theme: ResolvedTheme) {
   }
 }
 
+/**
+ * Runs `change`, which resizes `content` (e.g. its text zoom), then scrolls `scroller` so the
+ * innermost block that was at its top edge is back there, the same way into it.
+ */
+export function keepScrollAnchor(scroller: HTMLElement, content: HTMLElement, change: () => void) {
+  if (scroller.scrollTop === 0) return change()
+
+  const top = scroller.getBoundingClientRect().top
+  let anchor: HTMLElement | undefined
+  let before: DOMRect | undefined
+  // document order visits a block before its children, so keep narrowing into the one that crosses the top
+  for (const el of content.querySelectorAll<HTMLElement>("[data-source-line]")) {
+    if (anchor && !anchor.contains(el)) break
+    const rect = el.getBoundingClientRect()
+    if (rect.height > 0 && rect.bottom > top) {
+      anchor = el
+      before = rect
+    }
+  }
+  if (!anchor || !before) return change()
+
+  // a block cut by the top edge keeps the same share of it hidden; one just below keeps its gap
+  const gap = before.top - top
+  const hidden = gap < 0 ? -gap / before.height : 0
+  change()
+  const after = anchor.getBoundingClientRect()
+  scroller.scrollTop += after.top - (gap < 0 ? top - hidden * after.height : top + gap)
+}
+
 export async function copyCodeBlock(button: HTMLElement) {
   const code = button.closest(".code-block")?.querySelector("code")
   if (!code) return

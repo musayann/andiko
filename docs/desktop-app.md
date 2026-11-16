@@ -27,6 +27,10 @@ Documents open in tabs:
 
 Links to the site in a document open in a tab too, and the app handles the `andiko://` scheme: `andiko://s/<slug>-<id>` opens what `https://andiko.app/s/<slug>-<id>` shows (macOS registers it when the app is installed, so it doesn't reach `pnpm dev:desktop`).
 
+## Preview text size
+
+View → Zoom In, Zoom Out and Actual Size (<kbd>⌘</kbd><kbd>=</kbd>, <kbd>⌘</kbd><kbd>−</kbd>, <kbd>⌘</kbd><kbd>0</kbd>) change the size of the preview's text, like the − / + control in the toolbar. The rest of the window keeps its size; the webview has no page zoom of its own.
+
 ## The website it talks to
 
 Sharing and the PDF fallback call the website's API at `NEXT_PUBLIC_SITE_URL`; PDF export otherwise uses the system print dialog. Its Help menu opens that site, the project's GitHub issues, and the site's privacy policy and terms of use (Help → Privacy Policy); its Report link on shared documents writes to `NEXT_PUBLIC_CONTACT_EMAIL`, which the release build reads from the repo's Actions variable of the same name.

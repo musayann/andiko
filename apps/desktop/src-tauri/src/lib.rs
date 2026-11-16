@@ -55,7 +55,14 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     }
     let tabs = tabs.build()?;
 
-    let view = SubmenuBuilder::new(app, "View").fullscreen().build()?;
+    // the preview's text size (see preview-zoom.ts); the webview itself has no page zoom
+    let view = SubmenuBuilder::new(app, "View")
+        .item(&item(app, "zoom-in", "Zoom In", "CmdOrCtrl+=")?)
+        .item(&item(app, "zoom-out", "Zoom Out", "CmdOrCtrl+-")?)
+        .item(&item(app, "zoom-reset", "Actual Size", "CmdOrCtrl+0")?)
+        .separator()
+        .fullscreen()
+        .build()?;
     let window = SubmenuBuilder::new(app, "Window").minimize().maximize().build()?;
 
     // the page opens these in the browser (see HELP_LINKS in packages/editor/src/desktop/desktop-shell.tsx);

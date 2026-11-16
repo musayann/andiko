@@ -29,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@andiko/ui/components/t
 import { cn } from "@andiko/ui/lib/utils"
 
 import type { ViewMode } from "./view-mode"
+import { PreviewZoomControl } from "./zoom-control"
 
 const MODES: { value: ViewMode; label: string; shortcut: string; icon: typeof PencilIcon }[] = [
   { value: "edit", label: "Edit", shortcut: "Ctrl+Alt+E", icon: PencilIcon },
@@ -161,6 +162,8 @@ export function Toolbar({
           <TooltipContent>{scrollSync ? "Scroll sync on" : "Scroll sync off"}</TooltipContent>
         </Tooltip>
       )}
+
+      {mode !== "edit" && <PreviewZoomControl />}
 
       {onShare && (
         <Button variant="outline" size="sm" onClick={onShare} aria-label={shared ? "Shared" : "Share"}>

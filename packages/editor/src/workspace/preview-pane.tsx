@@ -7,7 +7,8 @@ import { toast } from "sonner"
 import { useDebouncedValue } from "@andiko/core/hooks/use-debounced-value"
 import { renderMarkdown } from "@andiko/core/markdown/renderer"
 import { sanitizeHtml } from "@andiko/core/markdown/sanitize"
-import { copyCodeBlock, enhancePreview, patchPreview } from "@andiko/core/preview-dom"
+import { copyCodeBlock, enhancePreview, keepScrollAnchor, patchPreview } from "@andiko/core/preview-dom"
+import { usePreviewZoom } from "@andiko/core/preview-zoom"
 import { useTheme } from "@andiko/ui/hooks/use-theme"
 import { cn } from "@andiko/ui/lib/utils"
 
@@ -28,6 +29,7 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
   const articleRef = useRef<HTMLElement>(null)
   const source = useDebouncedValue(content, 120)
   const { resolvedTheme } = useTheme()
+  const zoom = usePreviewZoom()
 
   const { html, meta, headings } = useMemo(() => {
     const result = renderMarkdown(source)
@@ -41,6 +43,15 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
     enhancePreview(article, resolvedTheme)
     onRendered?.()
   }, [html, resolvedTheme, onRendered])
+
+  // set imperatively, so the text at the top of the pane can stay there as it resizes
+  useLayoutEffect(() => {
+    const article = articleRef.current
+    const scroller = scrollRef.current
+    if (!article || !scroller) return
+    keepScrollAnchor(scroller, article, () => article.style.setProperty("--md-zoom", String(zoom)))
+    onRendered?.()
+  }, [zoom, scrollRef, onRendered])
 
   const followLink = (link: HTMLAnchorElement) => {
     const href = link.getAttribute("href") ?? ""

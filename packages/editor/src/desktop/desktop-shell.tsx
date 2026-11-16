@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { createDraft, getDoc, getDocs, resolveStartDoc } from "@andiko/core/db"
 import { printDocument } from "@andiko/core/export"
 import { openExternal } from "@andiko/core/platform"
+import { resetPreviewZoom, zoomPreviewIn, zoomPreviewOut } from "@andiko/core/preview-zoom"
 import { parseAndikoLink } from "@andiko/core/share/public"
 import { legalLinks, repoUrl, siteUrl } from "@andiko/core/site"
 import {
@@ -77,6 +78,9 @@ function useMenuEvents(onOpenLink: () => void) {
       else if (id === "previous-tab") cycleTab(-1)
       else if (id === "print") printActiveDocument().catch(() => toast.error("Could not print the document"))
       else if (id === "check-updates") void checkForUpdates(true)
+      else if (id === "zoom-in") zoomPreviewIn()
+      else if (id === "zoom-out") zoomPreviewOut()
+      else if (id === "zoom-reset") resetPreviewZoom()
       else if (helpLink) void openExternal(helpLink)
     }
 
@@ -86,11 +90,14 @@ function useMenuEvents(onOpenLink: () => void) {
       else unlisten = stop
     })
 
-    // Ctrl+Tab isn't a menu shortcut, so the page sees it
+    // Ctrl+Tab isn't a menu shortcut, so the page sees it; nor is Cmd+Shift+= (Cmd++), Zoom In's shifted twin
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === "Tab") {
         event.preventDefault()
         cycleTab(event.shiftKey ? -1 : 1)
+      } else if (event.metaKey && !event.ctrlKey && !event.altKey && event.key === "+") {
+        event.preventDefault()
+        zoomPreviewIn()
       }
     }
     window.addEventListener("keydown", onKeyDown)
