@@ -29,7 +29,7 @@ Links to the site in a document open in a tab too, and the app handles the `andi
 
 ## Preview text size
 
-View → Zoom In, Zoom Out and Actual Size (<kbd>⌘</kbd><kbd>=</kbd>, <kbd>⌘</kbd><kbd>−</kbd>, <kbd>⌘</kbd><kbd>0</kbd>) change the size of the preview's text, like the − / + control in the toolbar. The rest of the window keeps its size; the webview has no page zoom of its own.
+View → Zoom In, Zoom Out and Actual Size (<kbd>⌘</kbd><kbd>=</kbd>, <kbd>⌘</kbd><kbd>−</kbd>, <kbd>⌘</kbd><kbd>0</kbd>) change the size of the preview's text, like the − / + control in the toolbar. The text's column widens or narrows with it, so lines keep their length. The rest of the window keeps its size; the webview has no page zoom of its own.
 
 ## The website it talks to
 

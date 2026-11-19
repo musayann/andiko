@@ -44,12 +44,13 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
     onRendered?.()
   }, [html, resolvedTheme, onRendered])
 
-  // set imperatively, so the text at the top of the pane can stay there as it resizes
+  // sizes the text and its column together, so lines keep their length; set imperatively, so the
+  // text at the top of the pane can stay there as it resizes
   useLayoutEffect(() => {
     const article = articleRef.current
     const scroller = scrollRef.current
     if (!article || !scroller) return
-    keepScrollAnchor(scroller, article, () => article.style.setProperty("--md-zoom", String(zoom)))
+    keepScrollAnchor(scroller, article, () => scroller.style.setProperty("--md-zoom", String(zoom)))
     onRendered?.()
   }, [zoom, scrollRef, onRendered])
 
@@ -120,8 +121,13 @@ export function PreviewPane({ content, showToc, scrollRef, onToggleTask, onRende
 
   return (
     <div ref={scrollRef} className="h-full overflow-y-auto bg-background">
-      <div className={cn("mx-auto flex w-full justify-center gap-10 px-6 py-8 md:px-10", showToc && "max-w-[1240px]")}>
-        <div className="w-full max-w-[860px] min-w-0">
+      <div
+        className={cn(
+          "mx-auto flex w-full justify-center gap-10 px-6 py-8 md:px-10",
+          showToc && "max-w-[calc(380px_+_860px*var(--md-zoom,1))]",
+        )}
+      >
+        <div className="w-full max-w-[calc(860px*var(--md-zoom,1))] min-w-0">
           {meta.tags.length > 0 && (
             <div className="mb-6 flex flex-wrap items-center gap-1.5 text-muted-foreground">
               <TagIcon className="mr-0.5 size-3.5" aria-hidden />
