@@ -1,0 +1,138 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "prConcurrentLimit": 15,
+  "prHourlyLimit": 5,
+  "internalChecksFilter": "strict",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["dependencies", "security"],
+    "minimumReleaseAge": null,
+    "schedule": ["at any time"]
+  },
+  "packageRules": [
+    {
+      "description": "Cooldown periods so newly published/hijacked releases age before entering the lockfile",
+      "matchUpdateTypes": ["major"],
+      "minimumReleaseAge": "14 days"
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Follows the Node version in .nvmrc (CI) and engines.node (Vercel)",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@types/node"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Catch-all for npm minor/patch updates; specific groups below override this",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm minor and patch"
+    },
+    {
+      "description": "Catch-all for Cargo minor/patch updates; specific groups below override this",
+      "matchManagers": ["cargo"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "cargo minor and patch"
+    },
+    {
+      "description": "Major-only npm groups (minor/patch fall into npm minor and patch)",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@codemirror/*", "@lezer/*", "@uiw/react-codemirror"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "codemirror"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["puppeteer", "puppeteer-core", "@sparticuz/chromium"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "puppeteer"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/postcss", "tw-animate-css"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "tailwind"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["markdown-it", "markdown-it-*", "@vscode/markdown-it-katex"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "markdown-it"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["dexie", "dexie-react-hooks"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "dexie"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "eslint",
+        "eslint-config-*",
+        "prettier",
+        "turbo",
+        "typescript",
+        "@types/*",
+        "vitest",
+        "jsdom",
+        "@testing-library/*",
+        "fake-indexeddb"
+      ],
+      "matchUpdateTypes": ["major"],
+      "groupName": "tooling"
+    },
+    {
+      "description": "Pinned to the same version in every package, eslint-config-next along with next",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["next", "eslint-config-next"],
+      "groupName": "next"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
+      "groupName": "react"
+    },
+    {
+      "description": "Tauri build stops when JS packages and Rust crates differ in major.minor, so group them in one PR",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@tauri-apps/*"],
+      "groupName": "tauri"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["tauri", "tauri-*"],
+      "groupName": "tauri"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["objc2", "objc2-*"],
+      "groupName": "objc2"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["serde", "serde_json"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "serde"
+    },
+    {
+      "description": "GitHub Actions workflows",
+      "matchManagers": ["github-actions"],
+      "minimumReleaseAge": "7 days",
+      "groupName": "github-actions"
+    }
+  ]
+}
